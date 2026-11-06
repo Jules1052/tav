@@ -3,18 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Aleph for the Moon · The Hamilton Project</title>
+<title>Tav ת · Aleph for the Moon · The Hamilton Project</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Poppins:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="style.css?v=16">
+<link rel="stylesheet" href="style.css?v=17">
 </head>
 <body>
 <nav>
   <div class="wrap">
     <a class="brand" href="index.html"><svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 1.5a8.5 8.5 0 0 0 0 17a5 8.5 0 0 0 0-17z" fill="currentColor"/></svg>The Hamilton Project</a>
     <div class="links">
-      <a class="label" href="#aleph">Aleph ↓</a>
+      <a class="label" href="#tav">Tav ↓</a>
       <a class="label" href="#layers">Layers ↓</a>
     </div>
   </div>
@@ -24,23 +24,24 @@
   <div class="wrap">
     <div class="label">Page 03 · Build plan</div>
     <h1>Aleph for the Moon</h1>
+    <div class="name">Tav <span lang="he">ת</span></div>
     <p class="lede">A tool that takes a point on the Moon and downloads everything known about it, so an agent can look at the place. Not built yet.</p>
   </div>
 </header>
 
 <main class="wrap">
 
-  <section id="aleph">
-    <div class="head"><span class="label">01</span><h2>What Aleph is</h2><span class="label">one place in, one folder out</span></div>
+  <section id="tav">
+    <div class="head"><span class="label">01</span><h2>What Tav is</h2><span class="label">one place in, one folder out</span></div>
     <ul class="log">
       <li><span class="label">Aleph · Earth</span><p>A Python command-line tool. You give it a point or a drawn rectangle and it downloads everything inside: satellite imagery, elevation, 3D mesh, Street View and OpenStreetMap data.</p></li>
-      <li><span class="label">No AI inside</span><p>Aleph only collects data. It is the layer that lets a language model “look” at a place.</p></li>
-      <li><span class="label">Aleph · Moon</span><p>The same idea with lunar layers: give a latitude and longitude, or a box, and get one folder back.</p></li>
+      <li><span class="label">No AI inside</span><p>Like Aleph, Tav only collects data. It is the layer that lets a language model “look” at a place.</p></li>
+      <li><span class="label">Tav · Moon</span><p>Aleph is the first letter of the Hebrew alphabet; Tav is the last. The same idea with lunar layers: give a latitude and longitude, or a box, and get one folder back.</p></li>
       <li><span class="label">Easier than Earth</span><p>The Earth version depends on undocumented Google services. Lunar data is public NASA and JAXA data, and most of it is served as open map tiles.</p></li>
     </ul>
 
     <span class="label sub mt">What a run would look like</span>
-    <pre class="code">$ aleph-moon --lat 14.09 --lon -56.77 --radius 5km --out marius-pit/
+    <pre class="code">$ tav --lat 14.09 --lon -56.77 --radius 5km --out marius-pit/
 
 marius-pit/
   manifest.json        every file: what it shows, resolution, date, sun angle
@@ -84,7 +85,7 @@ marius-pit/
 
 <footer>
   <div class="wrap">
-    <div class="pages"><span class="label">Pages</span><a href="index.html">Home</a><a href="mapping.html">01 · Mapping the Moon</a><a href="software.html">02 · Software</a><a href="aleph.html" aria-current="page">03 · Aleph for the Moon</a><a href="detection.html">04 · Cave detection</a></div>
+    <div class="pages"><span class="label">Pages</span><a href="index.html">Home</a><a href="mapping.html">01 · Mapping the Moon</a><a href="software.html">02 · Software</a><a href="tav.html" aria-current="page">03 · Tav ת</a><a href="detection.html">04 · Cave detection</a></div>
     <span class="label made">Made by a human on Earth 🌍 — for now</span>
   </div>
 </footer>

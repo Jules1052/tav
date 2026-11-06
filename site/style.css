@@ -214,7 +214,11 @@ footer .made { text-transform: none; letter-spacing: .04em; }
 .tool p { margin: 0; font: 400 23.4px/1.6 var(--font); }
 .tool canvas { display: block; width: 100%; }
 
-/* 9 · Code block: a command and its output (aleph.html) */
+/* 9 · Code block: a command and its output (tav.html) */
 pre.code { margin: 8px 0 0; padding: 18px 20px; overflow-x: auto; border: 1px solid var(--line); background: #0a0a0b;
            font: 19.5px/1.6 var(--mono); color: var(--ink-2); }
 table.links a { color: var(--blue); text-underline-offset: 3px; }
+
+/* Tav: the tool's name and letter, shown under "Aleph for the Moon" */
+.name { display: block; font: 500 36.4px/1.2 var(--font); color: var(--violet); letter-spacing: .02em; margin: 0 0 20px; }
+.tile .name { font-size: 24.7px; margin: 4px 12px 0; }
