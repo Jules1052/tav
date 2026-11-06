@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="resources/readme-banner.png" alt="Tav ת" width="300">
+  <img src="resources/readme-banner.png" alt="Tav" width="490">
 </p>
 
 <p align="center">
@@ -72,10 +72,6 @@ curl localhost:8060/api/captures/<id>
 ```
 
 The example box is the Marius Hills pit. Add `"options": {"layers": [...], "max_px": 2048}` to a capture to choose the layers and the detail.
-
-## The site
-
-The same server hosts the notes behind Tav: how the Moon's minerals and caves have been mapped so far, the software behind the maps, and the plan to detect new caves with agents. Start at `http://localhost:8060`.
 
 > [!NOTE]
 > Data sources:
