@@ -11,6 +11,10 @@
   Cousin of <a href="https://github.com/Belluxx/Aleph">Aleph</a>, which does the same for the Earth.
 </p>
 
+<p align="center">
+  <img src="resources/demo.webp" alt="The Tav map: a box drawn on the Marius crater is downloaded, then shown as layers, as a 3D mesh and as a high-resolution frame" width="800">
+</p>
+
 Tav gives satellite imagery, terrain data, caves, minerals and on-site pictures of the Moon to your LLM.
 
 - Draw a rectangle or polygon on the map of the Moon and Tav downloads **everything** inside it: imagery, elevation, a textured 3D mesh, night temperature, gravity, radar, craters, names, pits and geology.
