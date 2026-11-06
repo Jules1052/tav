@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Hamilton Project</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Poppins:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="style.css?v=16">
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="brand" href="index.html"><svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 1.5a8.5 8.5 0 0 0 0 17a5 8.5 0 0 0 0-17z" fill="currentColor"/></svg>The Hamilton Project</a>
+    <div class="links">
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <div class="home">
+    <section class="intro">
+      <h1>Not Plato’s cave</h1>
+      <p class="lede">We map the Moon’s minerals and caves with agents.</p>
+      <blockquote class="quote">
+        <p>“Unable to resist my eager desire … and having wandered some distance among gloomy rocks, I came to the entrance of a great cavern, in front of which I stood some time, astonished … and after having remained there some time, two contrary emotions arose in me, fear and desire—fear of the threatening dark cavern, desire to see whether there were any marvellous thing within it.”</p>
+        <footer class="label">Leonardo da Vinci · Notebooks · trans. J. P. Richter, 1883</footer>
+      </blockquote>
+    </section>
+
+    <figure class="panel globe">
+      <div class="stage" tabindex="0" aria-label="Globe of the Moon. Drag or use the arrow keys to turn it.">
+        <canvas role="img" aria-label="3D globe of the Moon with exaggerated relief, coloured by mineral type, with known pits marked"></canvas>
+        <img class="fallback" src="img/thorium.jpg" alt="Thorium map of the Moon, two hemispheres">
+      </div>
+      <div class="tools">
+        <div class="modes" role="group" aria-label="Colour the Moon by">
+          <button type="button" data-mode="0" aria-pressed="true">Minerals</button><button type="button" data-mode="1" aria-pressed="false">Altitude</button>
+        </div>
+      </div>
+      <div class="legend"></div>
+      <div class="chips" role="group" aria-label="Go to a site"></div>
+      <div class="info" aria-live="polite"></div>
+      <figcaption class="label">Drag to turn · relief exaggerated · elevation LRO LOLA · iron and thorium Lunar Prospector · NASA</figcaption>
+    </figure>
+  </div>
+
+  <section id="pages">
+    <div class="head center"><h2>Pages</h2></div>
+    <div class="tiles">
+      <a class="tile" href="mapping.html">
+        <img src="img/thorium.jpg" width="1280" height="670" alt="">
+        <span class="label"><span>01</span></span>
+        <b>Mapping the Moon’s minerals and caves (physically)</b>
+        <p>Every method used so far, and the result each one gave.</p>
+      </a>
+      <a class="tile" href="software.html">
+        <img src="img/m3-water.jpg" width="960" height="960" alt="">
+        <span class="label"><span>02</span></span>
+        <b>Mapping the Moon’s minerals and caves (software)</b>
+        <p>The programs behind the maps, with animations of how they work.</p>
+      </a>
+      <a class="tile" href="aleph.html">
+        <img src="img/marius-pit.png" alt="">
+        <span class="label"><span>03</span></span>
+        <b>Aleph for the Moon</b>
+        <p>A tool that downloads everything known about a place on the Moon, for an agent to look at.</p>
+      </a>
+      <a class="tile" href="detection.html">
+        <img src="img/ingenii-pit.png" alt="">
+        <span class="label"><span>04</span></span>
+        <b>Detecting caves through agents</b>
+        <p>Feed an agent data through Aleph and propose new cave candidates.</p>
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="pages"><span class="label">Pages</span><a href="index.html" aria-current="page">Home</a><a href="mapping.html">01 · Mapping the Moon</a><a href="software.html">02 · Software</a><a href="aleph.html">03 · Aleph for the Moon</a><a href="detection.html">04 · Cave detection</a></div>
+    <span class="label made">Made by a human on Earth 🌍 — for now</span>
+  </div>
+</footer>
+
+<script src="moon.js"></script>
+<script src="contours.js"></script>
+<script src="rover.js?v=3"></script>
+</body>
+</html>
