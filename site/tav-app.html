@@ -3,49 +3,70 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tav ת · The Hamilton Project</title>
+<title>Tav ת · map</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%23000%27/%3E%3Ctext x=%2716%27 y=%2725%27 font-size=%2726%27 text-anchor=%27middle%27 fill=%27%23a98bff%27 font-family=%27Arial Hebrew,Arial,sans-serif%27%3E%D7%AA%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Poppins:wght@300;400;500;600&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="style.css?v=18">
-<link rel="stylesheet" href="tav-app.css?v=1">
+<link rel="stylesheet" href="style.css?v=20">
+<link rel="stylesheet" href="tav-app.css?v=4">
 </head>
 <body class="tavapp">
 
 <aside id="side">
   <header>
-    <a class="back label" href="index.html">← The Hamilton Project</a>
+    <div class="navrow">
+      <button type="button" id="h-back" aria-label="Go back">← Back</button>
+      <button type="button" id="h-fwd" aria-label="Go forward">Forward →</button>
+      <a class="back label" href="index.html">Home</a>
+    </div>
     <h1>Tav <span lang="he">ת</span></h1>
-    <p class="tag">Draw a box on the Moon. Tav downloads everything inside it.</p>
+    <p class="tag">Draw a box on the Moon. Choose what you want. Tav downloads it.</p>
+    <ol class="crumbs label" id="crumbs"><li data-s="home">1 Draw</li><li data-s="choose">2 Choose</li><li data-s="detail">3 Result</li></ol>
   </header>
 
   <section id="offline" hidden>
-    <p class="warn">The Tav server is not running, so the map works but nothing can be captured. Start it from the project folder with <code>./start.sh</code> and reload.</p>
+    <p class="warn">The Tav server is not running, so the map works but nothing can be downloaded. Start it from the project folder with <code>./start.sh</code> and reload.</p>
   </section>
 
   <section id="home">
-    <span class="label">New capture</span>
+    <span class="label">Draw the box</span>
     <div class="tools">
-      <button type="button" id="draw-rect">▭ Rectangle</button>
+      <button type="button" class="go" id="draw-rect">▭ Draw a rectangle</button>
       <button type="button" id="draw-poly">⬠ Polygon</button>
     </div>
-    <p class="hint" id="hint">Pick a shape, then draw on the map.</p>
-    <div id="pending" hidden>
-      <p class="big" id="pending-size"></p>
-      <div class="tools">
-        <button type="button" class="go" id="capture">Capture this box</button>
-        <button type="button" id="cancel">Cancel</button>
-      </div>
-    </div>
-    <span class="label mt">Captures</span>
+    <p class="hint" id="hint">Press the button, then press, drag and release on the map.</p>
+    <span class="label mt">Earlier captures</span>
     <ul id="caplist" class="list"><li class="muted">None yet.</li></ul>
   </section>
 
+  <section id="choose" hidden>
+    <span class="label">Your box</span>
+    <p class="big" id="c-size"></p>
+    <span class="label mt">Layers</span>
+    <ul id="c-layers" class="list checks"></ul>
+    <span class="label mt">Points on the map</span>
+    <ul id="c-points" class="list checks"></ul>
+    <span class="label mt">Sharper image and elevation</span>
+    <ul id="c-kaguya" class="list checks"></ul>
+    <span class="label mt">Detail</span>
+    <div class="tools seg" id="c-detail">
+      <button type="button" data-px="512">Low<small>512 px</small></button>
+      <button type="button" data-px="1024">Normal<small>1,024 px</small></button>
+      <button type="button" data-px="2048">High<small>2,048 px</small></button>
+    </div>
+    <p class="hint">Longest side of each layer. High takes longer on large boxes.</p>
+    <div class="tools sticky">
+      <button type="button" class="go" id="capture">Download</button>
+      <button type="button" id="redraw">Draw again</button>
+    </div>
+  </section>
+
   <section id="detail" hidden>
-    <button type="button" class="linkish label" id="to-home">← Captures</button>
     <h2 id="d-title"></h2>
     <p class="muted" id="d-sub"></p>
+    <div class="tools" id="d-3d"><button type="button" class="go3d" id="d-3d-btn">◆ Show in 3D</button></div>
     <ol id="d-steps" class="steps"></ol>
 
     <span class="label mt">Layers</span>
@@ -62,6 +83,7 @@
     <ul id="d-files" class="list files"></ul>
     <div class="path"><code id="d-path"></code><button type="button" id="copy-path">Copy path</button></div>
     <ul id="d-notes" class="notes"></ul>
+    <div class="tools"><button type="button" id="to-home">New capture</button></div>
   </section>
 </aside>
 
@@ -88,6 +110,7 @@
   <div id="three" hidden>
     <button type="button" class="close" id="t-close" aria-label="Close 3D view">×</button>
     <div class="bar"><span class="label">3D mesh · drag to turn, scroll to zoom</span>
+      <button type="button" id="t-reset">Centre the view</button>
       <label class="label">Height × <input type="range" id="t-exag" min="1" max="10" step="0.5" value="2"> <b id="t-exag-v">2</b></label></div>
     <div id="t-canvas"></div>
   </div>
@@ -97,6 +120,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-<script src="tav-app.js?v=1"></script>
+<script src="tav-app.js?v=4"></script>
 </body>
 </html>

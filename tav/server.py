@@ -160,13 +160,17 @@ def write_geotiff(path, arr, n, w, deg_px):
     Image.fromarray(arr.astype(np.float32), 'F').save(path, tiffinfo=ifd)
 
 
-def write_preview(path, arr, lo=1, hi=99):
+def write_preview(path, arr, lo=1, hi=99, box=None):
+    """Stretched picture of a layer. `box` (left, top, right, bottom in array pixels, fractions allowed) cuts it exactly to the capture box."""
     ok = np.isfinite(arr)
     if not ok.any(): return None
     a, b = np.percentile(arr[ok], [lo, hi]); b = b if b > a else a + 1
     g = (np.clip((np.nan_to_num(arr, nan=a) - a) / (b - a), 0, 1) * 255).astype(np.uint8)
     im = Image.merge('LA', (Image.fromarray(g), Image.fromarray((ok * 255).astype(np.uint8))))
-    if max(im.size) < 512: im = im.resize((im.size[0] * 512 // max(im.size), im.size[1] * 512 // max(im.size)), Image.BICUBIC)
+    if box:
+        bw, bh = box[2] - box[0], box[3] - box[1]; sc = max(1.0, 512 / max(bw, bh))
+        im = im.resize((max(1, int(round(bw * sc))), max(1, int(round(bh * sc)))), Image.BICUBIC, box=box)
+    elif max(im.size) < 512: im = im.resize((im.size[0] * 512 // max(im.size), im.size[1] * 512 // max(im.size)), Image.BICUBIC)
     im.save(path); return [float(a), float(b)]
 
 
@@ -220,8 +224,12 @@ def index(name):
     return INDEX[name]
 
 
+ALL_LAYERS = ['imagery', 'elevation', 'thermal_night', 'gravity', 'radar_cpr', 'vectors', 'catalogue', 'points_nac', 'points_radar', 'points_xenarch']
+
+
 class Capture:
-    def __init__(self, ring, shape):
+    def __init__(self, ring, shape, opts=None):
+        o = opts or {}; self.want = set(o.get('layers') or ALL_LAYERS) | {'elevation'}; self.max_px = int(min(2048, max(256, o.get('max_px') or 1024))); self.tc_download = bool(o.get('tc_download'))
         self.ring = [[float(a), w180(b)] for a, b in ring]
         la, lo = [p[0] for p in self.ring], [p[1] for p in self.ring]
         self.s, self.n, self.w, self.e = min(la), max(la), min(lo), max(lo)
@@ -231,8 +239,24 @@ class Capture:
         wk, hk = (self.e - self.w) * KM_DEG * math.cos(math.radians(mid)), (self.n - self.s) * KM_DEG
         self.m = dict(id=self.id, created=time.strftime('%Y-%m-%dT%H:%M:%S'), shape=shape, ring=self.ring,
                       bbox=dict(south=self.s, north=self.n, west=self.w, east=self.e), size_km=[round(wk, 2), round(hk, 2)],
-                      status='running', step='starting', steps=[], layers=[], vectors=[], catalogue=[], points=[], notes=[], files=[], dir=self.dir)
+                      options=dict(layers=sorted(self.want), max_px=self.max_px, tc_download=self.tc_download), status='running', step='starting', steps=[], layers=[], vectors=[], catalogue=[], points=[], notes=[], files=[], dir=self.dir)
         self.save()
+
+    @classmethod
+    def load(cls, cid):
+        c = cls.__new__(cls); c.dir = os.path.join(CAPS, cid)
+        with LOCK: c.m = json.load(open(os.path.join(c.dir, 'manifest.json')))
+        b = c.m['bbox']; c.ring = c.m['ring']; c.s, c.n, c.w, c.e = b['south'], b['north'], b['west'], b['east']
+        o = c.m.get('options') or {}; c.want = set(o.get('layers') or ALL_LAYERS); c.max_px = int(o.get('max_px') or 1024); c.tc_download = False
+        return c
+
+    def add_mesh(self):
+        self.m['status'] = 'running'; self.save()
+        if not os.path.exists(os.path.join(self.dir, 'wac.jpg')): self.step('Imagery', self.imagery)
+        self.m['layers'] = [l for l in self.m['layers'] if l['key'] != 'elevation']
+        self.step('Elevation and 3D mesh', self.elevation)
+        if self.m['catalogue']: self.step('Kaguya TC, 7 m', self.kaguya)
+        self.m['status'] = 'complete'; self.m['step'] = 'done'; self.save()
 
     def save(self):
         fs = []
@@ -252,15 +276,16 @@ class Capture:
         self.save()
 
     def mask(self, d):
+        self._inside = d['arr'].size
         if self.m['shape'] != 'polygon': return d['arr']
         h, w = d['arr'].shape; im = Image.new('L', (w, h), 0)
         ImageDraw.Draw(im).polygon([((lo - d['w']) / (d['e'] - d['w']) * w, (d['n'] - la) / (d['n'] - d['s']) * h) for la, lo in self.ring], fill=1)
-        a = d['arr'].copy(); a[np.array(im) == 0] = np.nan; return a
+        a = d['arr'].copy(); a[np.array(im) == 0] = np.nan; self._inside = max(1, int(np.array(im).sum())); return a
 
     # -- steps
     def imagery(self):
         span = max(self.e - self.w, self.n - self.s)
-        z = int(min(8, max(0, math.floor(math.log2(2048 * 180 / (256 * span))))))
+        z = int(min(8, max(0, math.floor(math.log2(2 * self.max_px * 180 / (256 * span))))))
         t = 180 / 2 ** z; x0, x1 = int((self.w + 180) // t), int((self.e + 180) // t); y0, y1 = int((90 - self.n) // t), int((90 - self.s) // t)
         y1 = min(y1, 2 ** z - 1); tiles = [(x, y) for y in range(y0, y1 + 1) for x in range(x0, x1 + 1)]
         def get(xy): return xy, Image.open(io.BytesIO(curl(TREK.format(z=z, x=xy[0] % 2 ** (z + 1), y=xy[1]), timeout=60)))
@@ -275,15 +300,16 @@ class Capture:
                                      m_px=round(KM_DEG * 1000 / ppd), source=f'LROC WAC global mosaic via NASA Moon Trek, zoom {z}', px=list(im.size)))
 
     def raster(self, r):
-        d = r.read(self.s, self.n, self.w, self.e)
+        d = r.read(self.s, self.n, self.w, self.e, self.max_px)
         if d is None: self.m['notes'].append(f'{r.title}: no coverage at this latitude'); return None
         a = self.mask(d); ok = np.isfinite(a)
         if not ok.any(): self.m['notes'].append(f'{r.title}: no data inside the box'); return None
         key = r.key.replace('_lola', '')
         write_geotiff(os.path.join(self.dir, key + '.tif'), a, d['n'], d['w'], d['deg_px'])
-        write_preview(os.path.join(self.dir, key + '.png'), a)
-        self.m['layers'].append(dict(key=key, title=r.title, unit=r.unit, file=key + '.tif', preview=key + '.png', bounds=[[d['s'], d['w']], [d['n'], d['e']]],
-                                     m_px=d['m_px'], native_m_px=d['native_m_px'], px=[a.shape[1], a.shape[0]], source=r.source, coverage_pct=round(float(ok.mean() * 100), 1),
+        bn, bs, bw, be = min(self.n, d['n']), max(self.s, d['s']), max(self.w, d['w']), min(self.e, d['e']); dp = d['deg_px']
+        write_preview(os.path.join(self.dir, key + '.png'), a, box=((bw - d['w']) / dp, (d['n'] - bn) / dp, (be - d['w']) / dp, (d['n'] - bs) / dp))
+        self.m['layers'].append(dict(key=key, title=r.title, unit=r.unit, file=key + '.tif', preview=key + '.png', bounds=[[bs, bw], [bn, be]], data_bounds=[[d['s'], d['w']], [d['n'], d['e']]],
+                                     m_px=d['m_px'], native_m_px=d['native_m_px'], px=[a.shape[1], a.shape[0]], source=r.source, coverage_pct=round(min(100.0, float(ok.sum() / self._inside * 100)), 1),
                                      min=round(float(np.nanmin(a)), 3), max=round(float(np.nanmax(a)), 3), mean=round(float(np.nanmean(a)), 3)))
         return d, a
 
@@ -354,13 +380,17 @@ class Capture:
         for typ, key, title, dt, nod, unit in (('TCORT', 'imagery_tc', 'Imagery · Kaguya TC', '>u2', 0, 'DN'), ('TCDTMM', 'elevation_tc', 'Elevation · Kaguya TC', '>i2', -9999, 'm')):
             c = next((c for c in self.m['catalogue'] if c['type'] == typ), None)
             if not c: continue
-            ppd = 4096; rows, cols = int(math.ceil((self.n - self.s) * ppd)), int(math.ceil((self.e - self.w) * ppd)); k = max(1, int(math.ceil(max(rows, cols) / 1536)))
+            ppd = 4096; rows, cols = int(math.ceil((self.n - self.s) * ppd)), int(math.ceil((self.e - self.w) * ppd)); k = max(1, int(math.ceil(max(rows, cols) / (1.5 * self.max_px))))
             out = np.full((len(range(0, rows, k)), len(range(0, cols, k))), np.nan, np.float32); missing = []
             for it in c['items']:
                 url = next((u for u in it['files'] if u.lower().endswith('.img')), None); mm = re.search(r'_([NS])(\d+)E(\d+)[NS]\d+E\d+', url or '')
                 if not mm: continue
                 top, west = (1 if mm.group(1) == 'N' else -1) * int(mm.group(2)), w180(int(mm.group(3))); f = os.path.basename(url)
                 loc = next((x for x in (os.path.join(DATA, 'kaguya-tc', f), os.path.join(CACHE, 'tc', f), os.path.join(self.dir, typ.lower(), f)) if os.path.exists(x)), None)
+                if not loc and self.tc_download:
+                    self.m['step'] = f'Downloading Kaguya tile {f} (302 MB)'; self.save()
+                    try: loc = curl_to(url, os.path.join(CACHE, 'tc', f), timeout=3600)
+                    except Exception as ex: self.m['notes'].append(f'{f}: download failed ({str(ex)[:80]})')
                 if not loc: missing.append(f); continue
                 a = np.memmap(loc, dt, 'r', shape=(12288, 12288))
                 r0, c0 = int(round((top - self.n) * ppd)), int(round((self.w - west) * ppd))   # box origin inside the tile
@@ -379,12 +409,12 @@ class Capture:
                 if not ok.all(): Image.merge('LA', (Image.fromarray(g), Image.fromarray((ok * 255).astype(np.uint8)))).save(os.path.join(self.dir, 'tc.png')); prev = 'tc.png'
             else: write_preview(os.path.join(self.dir, key + '.png'), a); prev = key + '.png'
             self.m['layers'].append(dict(key=key, title=title, unit=unit, file=key + '.tif', preview=prev, bounds=[[d['s'], d['w']], [d['n'], d['e']]], m_px=round(7.4 * k, 1), native_m_px=7.4,
-                                         px=[a.shape[1], a.shape[0]], source='Kaguya Terrain Camera map tiles, JAXA DARTS, 7.4 m per pixel', coverage_pct=round(float(np.isfinite(a).mean() * 100), 1),
+                                         px=[a.shape[1], a.shape[0]], source='Kaguya Terrain Camera map tiles, JAXA DARTS, 7.4 m per pixel', coverage_pct=round(min(100.0, float(np.isfinite(a).sum() / self._inside * 100)), 1),
                                          min=round(float(np.nanmin(a)), 1), max=round(float(np.nanmax(a)), 1), mean=round(float(np.nanmean(a)), 1)))
-            made[key] = a
-        if 'elevation_tc' in made:
-            a = made['elevation_tc']; wk, hk = self.m['size_km']; k = max(1, int(math.ceil(max(a.shape) / 300))); h = a[::k, ::k]
-            tp = os.path.join(self.dir, 'tc.jpg' if 'imagery_tc' in made else 'wac.jpg')
+            made[key] = self.m['layers'][-1]['coverage_pct']; made[key + '_a'] = a
+        if made.get('elevation_tc', 0) >= 90:   # sharper mesh, only if the tiles cover the box
+            a = made['elevation_tc_a']; wk, hk = self.m['size_km']; k = max(1, int(math.ceil(max(a.shape) / 300))); h = a[::k, ::k]
+            tp = os.path.join(self.dir, 'tc.jpg' if made.get('imagery_tc', 0) >= 90 else 'wac.jpg')
             tex = Image.open(tp).convert('RGB'); tex.thumbnail((2048, 2048)); b = io.BytesIO(); tex.save(b, 'JPEG', quality=88)
             write_glb(os.path.join(self.dir, 'mesh.glb'), h, b.getvalue(), wk * 1000, hk * 1000)
             self.m['mesh'] = dict(file='mesh.glb', vertices=int(h.size), relief_m=round(float(np.nanmax(h) - np.nanmin(h)), 1), width_m=wk * 1000, height_m=hk * 1000, source='Kaguya TC elevation and image')
@@ -392,40 +422,73 @@ class Capture:
     def points(self):
         pts = []; mid = (self.s + self.n) / 2; clamp = lambda v, a, b: min(max(v, a), b)
         for c in self.m['catalogue']:
-            if c['type'] != 'CDRNAC4': continue
+            if c['type'] != 'CDRNAC4' or 'points_nac' not in self.want: continue
             for it in c['items']:
                 if it['lat'] is None: continue
                 sun = f", sun {it['incidence']:.0f}° from vertical" + (' (night)' if it['incidence'] > 90 else '') if it['incidence'] is not None else ''
-                la, lo = clamp(it['lat'], self.s, self.n), clamp(w180(it['lon']), self.w, self.e)
-                fp = re.findall(r'(-?[\d.]+) (-?[\d.]+)', it['footprint'] or '')
+                la, lo = it['lat'], w180(it['lon']); centred = self.s <= la <= self.n and self.w <= lo <= self.e
+                fp = [] if centred else re.findall(r'(-?[\d.]+) (-?[\d.]+)', it['footprint'] or '')
                 if fp:   # dot at the middle of the part of the strip that lies inside the box
                     xs, ys = [w180(x) for x, _ in fp], [float(y) for _, y in fp]
                     a, b, c, d = max(min(xs), self.w), min(max(xs), self.e), max(min(ys), self.s), min(max(ys), self.n)
                     if a <= b and c <= d: la, lo = (c + d) / 2, (a + b) / 2
+                la, lo = clamp(la, self.s, self.n), clamp(lo, self.w, self.e)
                 pts.append(dict(kind='nac', lat=la, lon=lo, title=f"NAC frame {it['id'].split('.')[-1].upper()}",
                                 text=f"{(it['time'] or '')[:10]}, {it['m_px']} m per pixel{sun}. Raw strip, {it['bytes'] / 1e6:.0f} MB.", ref=it['id'], incidence=it['incidence']))
-        for t in index('lrs_tracks.json') or []:
+        for t in (index('lrs_tracks.json') or []) if 'points_radar' in self.want else []:
             a, b = min(t['lat0'], t['lat1']), max(t['lat0'], t['lat1'])
             if b < self.s or a > self.n or t['lat1'] == t['lat0']: continue
             dl = ((t['lon1'] - t['lon0'] + 180) % 360) - 180; lon = w180(t['lon0'] + dl * (clamp(mid, a, b) - t['lat0']) / (t['lat1'] - t['lat0']))
             if self.w <= lon <= self.e:
                 pts.append(dict(kind='radar', lat=clamp(mid, a, b), lon=lon, title=f"Radar sounder track {t['id'][-14:]}",
                                 text=f"Kaguya LRS, {t['day'][:4]}-{t['day'][4:6]}-{t['day'][6:]}. A vertical cut through the ground along the orbit, 25 m per pixel in depth.", ref=t['id'], day=t['day'], track=t))
-        for p in index('xenarch.json') or []:
+        for p in (index('xenarch.json') or []) if 'points_xenarch' in self.want else []:
             if self.s <= p['lat'] <= self.n and self.w <= p['lon'] <= self.e and in_ring([p['lat']], [p['lon']], self.ring)[0]: pts.append(dict(p))
         for i, p in enumerate(pts): p['i'] = i
         self.m['points'] = pts
         self.m['point_counts'] = {k: sum(1 for p in pts if p['kind'] == k) for k in ('nac', 'radar', 'ohrc', 'hardware', 'terrain')}
 
     def run(self):
-        self.step('Imagery', self.imagery)
-        self.step('Elevation and 3D mesh', self.elevation)
-        for r in RASTERS[2:]: self.step(r.title, lambda r=r: self.raster(r))
-        self.step('Craters, names, pits, geology', self.vectors)
-        self.step('Catalogue of products', self.catalogue)
-        self.step('Kaguya TC, 7 m', self.kaguya)
+        w = self.want
+        if 'imagery' in w: self.step('Imagery', self.imagery)
+        self.step('Elevation and 3D mesh', self.elevation)   # always: the 3D view needs it
+        for r in RASTERS[2:]:
+            if r.key in w: self.step(r.title, lambda r=r: self.raster(r))
+        if 'vectors' in w: self.step('Craters, names, pits, geology', self.vectors)
+        if 'catalogue' in w or 'points_nac' in w or self.tc_download:
+            self.step('Catalogue of products', self.catalogue)
+            self.step('Kaguya TC, 7 m', self.kaguya)
         self.step('Points', self.points)
         self.m['status'] = 'complete'; self.m['step'] = 'done'; self.save()
+
+
+def plan(ring):
+    ring = [[float(a), w180(b)] for a, b in ring]; la, lo = [p[0] for p in ring], [p[1] for p in ring]
+    s, n, w, e = min(la), max(la), min(lo), max(lo); mid = (s + n) / 2
+    inside = lambda pts: sum(1 for p in pts if s <= p['lat'] <= n and w <= p['lon'] <= e and in_ring([p['lat']], [p['lon']], ring)[0])
+    out = dict(size_km=[round((e - w) * KM_DEG * math.cos(math.radians(mid)), 2), round((n - s) * KM_DEG, 2)], layers={})
+    for key, r in (('elevation', RASTERS[0] if (n <= 60 and s >= -60) else RASTERS[1]), ('thermal_night', RASTERS[2]), ('gravity', RASTERS[3]), ('radar_cpr', RASTERS[4])):
+        ok = min(n, r.lat_top) > max(s, r.lat_bot)
+        out['layers'][key] = dict(title=r.title, m_px=round(KM_DEG * 1000 / r.ppd, 1), px=[int((e - w) * r.ppd) + 1, int((n - s) * r.ppd) + 1], available=ok, source=r.source)
+    out['layers']['imagery'] = dict(title='Imagery · LROC WAC', m_px=83, px=[int((e - w) * 364) + 1, int((n - s) * 364) + 1], available=True, source='LROC WAC global mosaic, NASA Moon Trek')
+    tiles = [(top, west) for top in range(int(math.floor(s / 3)) * 3 + 3, int(math.ceil(n / 3)) * 3 + 1, 3) for west in range(int(math.floor((w % 360) / 3)) * 3, int(math.ceil((w % 360 + (e - w)) / 3)) * 3, 3)]
+    have = 0
+    for top, west in tiles:
+        ns = lambda v: ('N' if v >= 0 else 'S') + f'{abs(v):02d}'
+        f = f'_MAP_02_{ns(top)}E{west % 360:03d}{ns(top - 3)}E{(west + 3) % 360 if (west + 3) % 360 else 360:03d}SC.img'
+        have += all(any(os.path.exists(os.path.join(d, pre + f)) for d in (os.path.join(DATA, 'kaguya-tc'), os.path.join(CACHE, 'tc'))) for pre in ('TCO', 'DTM'))
+    out['kaguya'] = dict(tiles=len(tiles), on_disk=have, download_mb=(len(tiles) - have) * 604)
+    c = index('craters.npy'); cm = (c[:, 0] >= s) & (c[:, 0] <= n) & (c[:, 1] >= w) & (c[:, 1] <= e) if c is not None else None
+    xen = [p for p in (index('xenarch.json') or [])]; radar = 0
+    for t in index('lrs_tracks.json') or []:
+        a, b = min(t['lat0'], t['lat1']), max(t['lat0'], t['lat1'])
+        if b < s or a > n or t['lat1'] == t['lat0']: continue
+        dl = ((t['lon1'] - t['lon0'] + 180) % 360) - 180; lon = w180(t['lon0'] + dl * (min(max(mid, a), b) - t['lat0']) / (t['lat1'] - t['lat0']))
+        radar += w <= lon <= e
+    out['counts'] = dict(craters=int(cm.sum()) if cm is not None else None, names=sum(1 for x in (index('names.json') or []) if s <= x[2] <= n and w <= x[3] <= e),
+                         pits=inside(index('pits.json') or []), radar=int(radar), ohrc=inside([p for p in xen if p['kind'] == 'ohrc']),
+                         hardware=inside([p for p in xen if p['kind'] == 'hardware']), terrain=inside([p for p in xen if p['kind'] == 'terrain']))
+    return out
 
 
 def _try(f, *a):
@@ -511,9 +574,12 @@ class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *a, **k): super().__init__(*a, directory=SITE, **k)
     def log_message(self, *a): pass
 
+    def end_headers(self):   # always revalidate: a stale script or style sheet looks like a broken page
+        self.send_header('Cache-Control', 'no-cache'); super().end_headers()
+
     def send_json(self, obj, code=200):
         b = json.dumps(obj).encode(); self.send_response(code); self.send_header('Content-Type', 'application/json')
-        self.send_header('Content-Length', str(len(b))); self.send_header('Cache-Control', 'no-store'); self.end_headers(); self.wfile.write(b)
+        self.send_header('Content-Length', str(len(b))); self.end_headers(); self.wfile.write(b)
 
     def manifest(self, cid):
         if not re.fullmatch(r'tav-[\w-]+', cid): raise KeyError(cid)
@@ -545,6 +611,7 @@ class Handler(SimpleHTTPRequestHandler):
         except Exception as ex:
             traceback.print_exc(); return self.send_json(dict(error=str(ex)[:300]), 500)
         if u.path.startswith('/api/'): return self.send_json(dict(error='not found'), 404)
+        if u.path == '/favicon.ico': self.send_response(204); return self.end_headers()
         return super().do_GET()
 
     def do_POST(self):
@@ -553,9 +620,12 @@ class Handler(SimpleHTTPRequestHandler):
             if self.path == '/api/captures':
                 ring = body['ring']
                 if len(ring) < 3 or len(ring) > 200: raise ValueError('a box needs 3 to 200 corners')
-                c = Capture(ring, 'polygon' if body.get('shape') == 'polygon' else 'rectangle')
+                c = Capture(ring, 'polygon' if body.get('shape') == 'polygon' else 'rectangle', body.get('options'))
                 if c.e - c.w > 180: raise ValueError('boxes across the 180° meridian are not supported yet')
                 threading.Thread(target=c.run, daemon=True).start(); return self.send_json(dict(id=c.id))
+            if self.path == '/api/plan': return self.send_json(plan(body['ring']))
+            if len(parts) == 4 and parts[:2] == ['api', 'captures'] and parts[3] == 'mesh':
+                self.manifest(parts[2]); threading.Thread(target=Capture.load(parts[2]).add_mesh, daemon=True).start(); return self.send_json(dict(ok=True))
             if len(parts) == 4 and parts[:2] == ['api', 'captures'] and parts[3] == 'fetch':
                 m = self.manifest(parts[2]); threading.Thread(target=fetch_products, args=(os.path.join(CAPS, parts[2]), m, body['type'], body.get('id')), daemon=True).start()
                 return self.send_json(dict(ok=True, job=f"{body['type']}:{body.get('id') or 'all'}"))

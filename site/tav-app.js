@@ -1,4 +1,5 @@
-// Tav app · draw a box on the Moon, capture every layer inside it, click the dots.
+// Tav app · 1 draw a box, 2 choose what to download, 3 look at the result.
+// Every step has its own address (#…), so Back and Forward work.
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
@@ -11,6 +12,7 @@
   var fmtB = function (b) { return b >= 1e9 ? (b / 1e9).toFixed(1) + ' GB' : b >= 1e6 ? (b / 1e6).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1e3)) + ' kB'; };
   var num = function (v) { return v.toLocaleString('en', { maximumFractionDigits: Math.abs(v) >= 100 ? 0 : Math.abs(v) >= 10 ? 1 : 2 }); };
   var fmtKm = function (k) { return k >= 100 ? Math.round(k) : k >= 10 ? k.toFixed(1) : k.toFixed(2); };
+  var res = function (m) { return (m >= 1000 ? (m / 1000).toFixed(1) + ' km' : m + ' m') + ' per pixel'; };
   var el = function (tag, attrs, kids) {
     var e = document.createElement(tag), k;
     for (k in attrs || {}) { if (k === 'text') e.textContent = attrs[k]; else if (k === 'on') e.addEventListener('click', attrs[k]); else e.setAttribute(k, attrs[k]); }
@@ -21,15 +23,50 @@
     return fetch(path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : undefined)
       .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || r.status); return j; }); });
   };
+  var store = { get: function (k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }, set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 
   // ---------------------------------------------------------------- map
   var map = L.map('map', { crs: L.CRS.EPSG4326, center: [14.09, -56.77], zoom: 3, minZoom: 1, maxZoom: 13, zoomControl: false,
-    maxBounds: [[-95, -200], [95, 200]], zoomSnap: 0.5, doubleClickZoom: true });
-  L.imageOverlay('img/tav/moon_map.jpg', [[-90, -180], [90, 180]]).addTo(map);
+    maxBounds: [[-95, -200], [95, 200]], zoomSnap: 0.5 });
+  map.attributionControl.setPrefix('');
+  map.createPane('base').style.zIndex = 150;   // under the tiles: only seen while they load or if NASA is unreachable
+  L.imageOverlay('img/tav/moon_map.jpg', [[-90, -180], [90, 180]], { pane: 'base' }).addTo(map);
   L.tileLayer('https://trek.nasa.gov/tiles/Moon/EQ/LRO_WAC_Mosaic_Global_303ppd_v02/1.0.0/default/default028mm/{z}/{y}/{x}.jpg',
     { maxNativeZoom: 8, maxZoom: 13, noWrap: true, bounds: [[-90, -180], [90, 180]], attribution: 'LROC WAC mosaic · NASA Moon Trek' }).addTo(map);
-  map.attributionControl.setPrefix('');
   $('zin').onclick = function () { map.zoomIn(); }; $('zout').onclick = function () { map.zoomOut(); };
+
+  // ------------------------------------------------- addresses and history
+  // ''                       step 1, draw
+  // new=rectangle;lat,lon;…  step 2, choose
+  // tav-…[&3d|&p12]          step 3, result (optionally the 3D view or one point)
+  function nav(hash, replace) {
+    var url = location.pathname + (hash ? '#' + hash : '');
+    if (replace) history.replaceState(null, '', url); else history.pushState(null, '', url);
+    route();
+  }
+  $('h-back').onclick = function () { history.back(); };
+  $('h-fwd').onclick = function () { history.forward(); };
+  window.addEventListener('popstate', route);
+  function show(step) {
+    ['home', 'choose', 'detail'].forEach(function (s) { $(s).hidden = s !== step; });
+    var order = ['home', 'choose', 'detail'], at = order.indexOf(step);
+    Array.prototype.forEach.call($('crumbs').children, function (li, i) { li.className = i === at ? 'on' : i < at ? 'done' : ''; });
+    $('side').scrollTop = 0;
+  }
+  function route() {
+    var h = decodeURIComponent(location.hash.slice(1)), parts = h.split('&');
+    setMode(null);
+    if (h.indexOf('new=') === 0) {
+      var seg = h.slice(4).split(';'), pts = seg.slice(1).map(function (s) { return s.split(',').map(Number); });
+      if (pts.length >= 3 && pts.every(function (p) { return p.length === 2 && isFinite(p[0]) && isFinite(p[1]); })) { leaveCapture(); choose(seg[0] === 'polygon' ? 'polygon' : 'rectangle', pts); return; }
+    }
+    if (/^tav-[\w-]+$/.test(parts[0])) {
+      clearShape(); want = parts[1] || null;
+      if (!cur || cur.id !== parts[0]) openCapture(parts[0]); else applyWant();
+      show('detail'); return;
+    }
+    leaveCapture(); clearShape(); show('home'); loadList();
+  }
 
   // ---------------------------------------------------------------- draw
   var mode = null, shape = null, ring = null, start = null, verts = [], ghost = null;
@@ -37,20 +74,16 @@
     mode = m; $('draw-rect').classList.toggle('on', m === 'rect'); $('draw-poly').classList.toggle('on', m === 'poly');
     map.getContainer().classList.toggle('drawing', !!m);
     if (m) { map.dragging.disable(); map.doubleClickZoom.disable(); } else { map.dragging.enable(); map.doubleClickZoom.enable(); }
-    $('hint').textContent = m === 'rect' ? 'Press, drag and release on the map.' : m === 'poly' ? 'Click each corner. Double-click to close the shape.' : 'Pick a shape, then draw on the map.';
+    $('hint').textContent = m === 'rect' ? 'Now press, drag and release on the map.' : m === 'poly' ? 'Click each corner on the map. Double-click to close the shape.' : 'Press the button, then press, drag and release on the map.';
     verts = []; start = null; if (ghost) { map.removeLayer(ghost); ghost = null; }
   }
-  function clearShape() { if (shape) map.removeLayer(shape); shape = null; ring = null; $('pending').hidden = true; }
+  function clearShape() { if (shape) map.removeLayer(shape); shape = null; ring = null; }
   function finish(kind, pts) {
-    setMode(null); clearShape(); ring = pts.map(function (p) { return [p.lat, p.lng]; }); ring.kind = kind;
-    shape = L.polygon(pts, { color: RED, weight: 2, fillColor: RED, fillOpacity: 0.08, interactive: false }).addTo(map);
-    var b = shape.getBounds(), mid = (b.getNorth() + b.getSouth()) / 2;
-    $('pending-size').textContent = fmtKm((b.getEast() - b.getWest()) * KM * Math.cos(mid * Math.PI / 180)) + ' km × ' + fmtKm((b.getNorth() - b.getSouth()) * KM) + ' km';
-    $('pending').hidden = false; $('hint').textContent = 'Box drawn. Capture it, or draw again.';
+    nav('new=' + kind + ';' + pts.map(function (p) { return p.lat.toFixed(5) + ',' + p.lng.toFixed(5); }).join(';'));
   }
-  $('draw-rect').onclick = function () { showHome(); setMode(mode === 'rect' ? null : 'rect'); };
-  $('draw-poly').onclick = function () { showHome(); setMode(mode === 'poly' ? null : 'poly'); };
-  $('cancel').onclick = function () { clearShape(); setMode(null); };
+  $('draw-rect').onclick = function () { setMode(mode === 'rect' ? null : 'rect'); };
+  $('draw-poly').onclick = function () { setMode(mode === 'poly' ? null : 'poly'); };
+  $('redraw').onclick = function () { nav(''); setMode('rect'); };
   map.on('mousedown', function (e) { if (mode === 'rect') { start = e.latlng; } });
   map.on('mousemove', function (e) {
     if (mode === 'rect' && start) {
@@ -74,45 +107,101 @@
     var v = verts.filter(function (p, i) { return i === 0 || !p.equals(verts[i - 1]); });
     if (v.length >= 3) finish('polygon', v);
   });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if (mode) setMode(null); else if (!$('three').hidden) close3d(); else closeViewer(); } });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && mode) setMode(null); });
+
+  // ----------------------------------------------- step 2 · choose
+  var opts = { off: {}, max_px: 1024, tc: false };   // fresh every time: nothing stays switched off by surprise
+  function check(key, title, sub, disabled) {
+    var cb = el('input', { type: 'checkbox' }); cb.checked = !disabled && !opts.off[key]; cb.disabled = !!disabled; cb.dataset.key = key;
+    cb.onchange = function () { opts.off[key] = !cb.checked; store.set('tav-options', opts); };
+    return el('li', disabled ? { class: 'off' } : {}, [el('label', {}, [cb, el('span', {}, [title, el('small', { text: sub })])])]);
+  }
+  function choose(kind, pts) {
+    clearShape(); ring = pts; ring.kind = kind; show('choose');
+    shape = L.polygon(pts, { color: RED, weight: 2, fillColor: RED, fillOpacity: 0.08, interactive: false }).addTo(map);
+    var b = shape.getBounds(), mid = (b.getNorth() + b.getSouth()) / 2;
+    if (!map.getBounds().pad(0.3).contains(b) || map.getBoundsZoom(b) - map.getZoom() > 3) map.fitBounds(b, { padding: [120, 120], maxZoom: 11 });
+    $('c-size').textContent = fmtKm((b.getEast() - b.getWest()) * KM * Math.cos(mid * Math.PI / 180)) + ' km × ' + fmtKm((b.getNorth() - b.getSouth()) * KM) + ' km · ' + kind;
+    ['c-layers', 'c-points', 'c-kaguya'].forEach(function (id) { $(id).innerHTML = ''; });
+    $('c-layers').appendChild(el('li', { class: 'muted', text: 'Looking at what is inside…' }));
+    Array.prototype.forEach.call($('c-detail').children, function (bt) {
+      bt.classList.toggle('on', +bt.dataset.px === opts.max_px);
+      bt.onclick = function () { opts.max_px = +bt.dataset.px; store.set('tav-options', opts); Array.prototype.forEach.call($('c-detail').children, function (x) { x.classList.toggle('on', x === bt); }); };
+    });
+    $('capture').disabled = true;
+    api('/api/plan', { ring: pts }).then(function (p) {
+      if (ring !== pts) return;
+      var L1 = $('c-layers'), c = p.counts, k = p.kaguya; L1.innerHTML = ''; $('capture').disabled = false;
+      ['imagery', 'elevation', 'thermal_night', 'gravity', 'radar_cpr'].forEach(function (key) {
+        var l = p.layers[key];
+        if (key === 'elevation') { L1.appendChild(el('li', {}, [el('label', {}, [el('input', { type: 'checkbox', checked: '', disabled: '' }), el('span', {}, [l.title + ' + 3D mesh', el('small', { text: 'Always included · ' + res(l.m_px) + ' · ' + l.px[0].toLocaleString() + ' × ' + l.px[1].toLocaleString() + ' px in the box' })])])])); return; }
+        L1.appendChild(check(key, l.title, l.available ? res(l.m_px) + ' · ' + l.px[0].toLocaleString() + ' × ' + l.px[1].toLocaleString() + ' px in the box' : 'Not available at this latitude', !l.available));
+      });
+      L1.appendChild(check('vectors', 'Craters, names, pits, geology', (c.craters === null ? '' : c.craters.toLocaleString() + ' craters · ') + c.names + ' names · ' + c.pits + (c.pits === 1 ? ' pit' : ' pits')));
+      L1.appendChild(check('catalogue', 'List of full products in the archives', 'NAC frames, Kaguya tiles, M³ cubes, radar strips: names, sizes and links'));
+      var P = $('c-points');
+      P.appendChild(check('points_nac', 'NAC raw frames', 'Counted by asking the archive, a few seconds'));
+      P.appendChild(check('points_radar', 'Radar sounder tracks', c.radar + (c.radar === 1 ? ' track crosses' : ' tracks cross') + ' the box', !c.radar));
+      P.appendChild(check('points_xenarch', 'Xenarch images', c.ohrc + ' OHRC tiles · ' + c.hardware + ' hardware sites · ' + c.terrain + ' terrain tiles', !(c.ohrc + c.hardware + c.terrain)));
+      var K = $('c-kaguya'), need = k.tiles - k.on_disk;
+      if (!need) K.appendChild(el('li', {}, ['Kaguya Terrain Camera, 7 m per pixel', el('small', { text: (k.tiles === 1 ? 'The tile is' : 'All ' + k.tiles + ' tiles are') + ' already on disk: included' })]));
+      else {
+        var cb = el('input', { type: 'checkbox' }); cb.checked = !!opts.tc && need <= 4; cb.id = 'c-tc';
+        cb.onchange = function () { opts.tc = cb.checked; store.set('tav-options', opts); };
+        K.appendChild(el('li', {}, [el('label', {}, [cb, el('span', {}, ['Kaguya Terrain Camera, 7 m per pixel', el('small', { text: 'Download ' + need + (need === 1 ? ' tile pair' : ' tile pairs') + ' · ' + fmtB(k.download_mb * 1e6) + '. Without it: image at 83 m, elevation at 59 m' })])])]));
+      }
+    }).catch(function (e) {
+      $('c-layers').innerHTML = ''; $('c-layers').appendChild(el('li', { class: 'muted', text: online ? 'Could not plan this box: ' + e.message : 'Start the Tav server to see what is inside.' }));
+    });
+  }
+  $('capture').onclick = function () {
+    if (!ring) return;
+    var layers = Array.prototype.filter.call(document.querySelectorAll('#choose input[data-key]'), function (c) { return c.checked; }).map(function (c) { return c.dataset.key; });
+    $('capture').disabled = true;
+    api('/api/captures', { ring: ring, shape: ring.kind, options: { layers: layers.length ? layers : ['none'], max_px: opts.max_px, tc_download: !!($('c-tc') && $('c-tc').checked) } })
+      .then(function (r) { $('capture').disabled = false; nav(r.id); })
+      .catch(function (e) { $('capture').disabled = false; alert('Download failed: ' + e.message); });
+  };
 
   // ------------------------------------------------------------ captures
-  var deep = null;
-  var cur = null, timer = null, vis = {}, overlays = {}, markers = [], builtFor = null, online = false;
-  function showHome() { $('home').hidden = false; $('detail').hidden = true; }
+  var openTick = null;
+  var cur = null, timer = null, vis = {}, overlays = {}, markers = [], builtFor = null, online = false, want = null, fitNext = false;
   function loadList() {
     return api('/api/captures').then(function (list) {
       online = true; $('offline').hidden = true;
       var ul = $('caplist'); ul.innerHTML = '';
       if (!list.length) ul.appendChild(el('li', { class: 'muted', text: 'None yet.' }));
       list.forEach(function (c) {
-        ul.appendChild(el('li', { class: 'cap', tabindex: '0', on: function () { openCapture(c.id, true); } },
+        ul.appendChild(el('li', { class: 'cap', tabindex: '0', on: function () { nav(c.id); } },
           [c.created.replace('T', ' · ').slice(0, 18), el('small', { text: fmtKm(c.size_km[0]) + ' km × ' + fmtKm(c.size_km[1]) + ' km · ' + ((c.bbox.north + c.bbox.south) / 2).toFixed(2) + '°, ' + ((c.bbox.east + c.bbox.west) / 2).toFixed(2) + '° · ' + c.status })]));
       });
-    }).catch(function () { online = false; $('offline').hidden = false; $('capture').disabled = true; });
+    }).catch(function () { online = false; $('offline').hidden = false; });
   }
-  $('capture').onclick = function () {
-    if (!ring) return; $('capture').disabled = true;
-    api('/api/captures', { ring: ring, shape: ring.kind }).then(function (r) { $('capture').disabled = false; $('pending').hidden = true; openCapture(r.id, false); })
-      .catch(function (e) { $('capture').disabled = false; alert('Capture failed: ' + e.message); });
-  };
-  $('to-home').onclick = function () { closeCapture(); history.replaceState(null, '', location.pathname); loadList(); };
-  function closeCapture() {
-    clearInterval(timer); timer = null; cur = null; builtFor = null; closeViewer(); close3d();
+  $('to-home').onclick = function () { nav(''); };
+  function leaveCapture() {
+    clearInterval(timer); timer = null; cur = null; builtFor = null; want = null; hideViewer(); hide3d();
     Object.keys(overlays).forEach(function (k) { map.removeLayer(overlays[k]); }); overlays = {};
-    markers.forEach(function (m) { map.removeLayer(m); }); markers = []; clearShape(); showHome();
+    markers.forEach(function (m) { map.removeLayer(m); }); markers = [];
   }
-  function openCapture(id, fit) {
-    closeCapture(); $('home').hidden = true; $('detail').hidden = false; vis = { outline: true };
-    history.replaceState(null, '', '#' + id);
+  function openCapture(id) {
+    var keep = want; leaveCapture(); want = keep; vis = { outline: true }; fitNext = true;
+    $('d-title').textContent = 'Loading…'; $('d-sub').textContent = '';
+    ['d-steps', 'd-layers', 'd-points', 'd-cat', 'd-files', 'd-notes'].forEach(function (k) { $(k).innerHTML = ''; });
     var tick = function () {
       api('/api/captures/' + id).then(function (m) {
-        var first = !cur; cur = m; render(first && fit);
+        if (location.hash.slice(1).split('&')[0] !== id) return;
+        cur = m; render();
         var busy = m.status !== 'complete' || Object.keys(m.jobs || {}).some(function (k) { return m.jobs[k].state === 'running'; });
         clearInterval(timer); timer = setInterval(tick, busy ? 1200 : 6000);
-      }).catch(function () {});
+      }).catch(function (e) { if (!cur) { $('d-title').textContent = 'Capture not found'; $('d-sub').textContent = e.message; } });
     };
-    tick();
+    openTick = tick; tick();
+  }
+  function applyWant() {
+    if (!cur || cur.status !== 'complete') return;
+    if (want === '3d') { hideViewer(); if (cur.mesh) { if (location.hash.indexOf('&3d') < 0) { nav(cur.id + '&3d'); return; } show3d(); } }
+    else if (/^p\d+$/.test(want || '') && cur.points[+want.slice(1)]) { hide3d(); showPoint(+want.slice(1), 0); }
+    else { hide3d(); hideViewer(); }
   }
 
   function layerRow(key, title, sub, color) {
@@ -120,27 +209,33 @@
     cb.onchange = function () { vis[key] = cb.checked; sync(); };
     return el('li', {}, [el('label', {}, [cb, el('span', {}, [color ? el('i', { class: 'dotkey', style: '--c:' + color }) : '', title, el('small', { text: sub })])])]);
   }
-  function render(fit) {
+  function render() {
     var m = cur, b = m.bbox;
     $('d-title').textContent = m.created.replace('T', ' · ').slice(0, 18);
-    $('d-sub').textContent = (m.status === 'complete' ? 'Complete' : 'Capturing…') + ' · ' + fmtKm(m.size_km[0]) + ' km × ' + fmtKm(m.size_km[1]) + ' km · ' + ((b.north + b.south) / 2).toFixed(3) + '°, ' + ((b.east + b.west) / 2).toFixed(3) + '°';
+    $('d-sub').textContent = (m.status === 'complete' ? 'Complete' : 'Downloading…') + ' · ' + fmtKm(m.size_km[0]) + ' km × ' + fmtKm(m.size_km[1]) + ' km · ' + ((b.north + b.south) / 2).toFixed(3) + '°, ' + ((b.east + b.west) / 2).toFixed(3) + '°';
     var st = $('d-steps'); st.innerHTML = '';
     m.steps.forEach(function (s) { st.appendChild(el('li', { class: s.ok ? 'ok' : 'bad', text: s.name + (s.ok ? ' · ' + s.seconds + ' s' : ' · failed') })); });
     if (m.status !== 'complete') st.appendChild(el('li', { class: 'run', text: m.step }));
     st.hidden = m.status === 'complete' && m.steps.every(function (s) { return s.ok; });
 
-    // default: sharpest imagery on, the rest off
     var keys = m.layers.map(function (l) { return l.key; });
-    var best = keys.indexOf('imagery_tc') >= 0 ? 'imagery_tc' : 'imagery';
+    var tc = m.layers.filter(function (l) { return l.key === 'imagery_tc'; })[0];
+    var best = tc && tc.coverage_pct >= 90 ? 'imagery_tc' : 'imagery';
     keys.forEach(function (k) { if (!(k in vis)) vis[k] = false; });
     if (keys.indexOf(best) >= 0 && !vis._picked) { vis[best] = true; vis._picked = best; }
     if (best === 'imagery_tc' && vis._picked === 'imagery') { vis.imagery = false; vis.imagery_tc = true; vis._picked = best; }
 
+    var b3 = $('d-3d-btn'), done = m.status === 'complete';
+    b3.disabled = !done; b3.textContent = !done ? '◆ 3D view · preparing…' : m.mesh ? '◆ Show in 3D' : '◆ Build the 3D view';
+    b3.onclick = function () {
+      if (m.mesh) { nav(m.id + '&3d'); return; }
+      b3.disabled = true; want = '3d'; api('/api/captures/' + m.id + '/mesh', {}).then(function () { clearInterval(timer); timer = setInterval(function () { openTick && openTick(); }, 1200); }).catch(function (e) { alert('Could not build the 3D view: ' + e.message); });
+    };
     var ul = $('d-layers'); ul.innerHTML = '';
-    if (m.mesh) ul.appendChild(el('li', {}, [el('div', { class: 'row' }, [el('span', {}, ['3D mesh', el('small', { text: m.mesh.vertices.toLocaleString() + ' points · ' + m.mesh.relief_m + ' m of relief' })]), el('button', { type: 'button', text: 'Show in 3D', on: open3d })])]));
+    if (m.mesh) ul.appendChild(el('li', {}, ['3D mesh', el('small', { text: m.mesh.vertices.toLocaleString() + ' points · ' + num(m.mesh.relief_m) + ' m of relief · mesh.glb' })]));
     ul.appendChild(layerRow('outline', 'Capture outline', m.shape));
     m.layers.forEach(function (l) {
-      var sub = (l.m_px >= 1000 ? (l.m_px / 1000).toFixed(1) + ' km' : l.m_px + ' m') + ' per pixel';
+      var sub = res(l.m_px);
       if (l.min !== undefined && l.key.indexOf('imagery') < 0) sub += ' · ' + num(l.min) + ' to ' + num(l.max) + ' ' + l.unit;
       if (l.coverage_pct !== undefined && l.coverage_pct < 99) sub += ' · covers ' + l.coverage_pct + '%';
       ul.appendChild(layerRow(l.key, l.title, sub));
@@ -156,8 +251,8 @@
       if (!(('p_' + k) in vis)) vis['p_' + k] = true;
       if (pc[k]) up.appendChild(layerRow('p_' + k, KIND[k].name, pc[k] + (pc[k] === 1 ? ' point' : ' points'), KIND[k].c));
     });
-    if (m.status === 'complete' && !m.points.length) up.appendChild(el('li', { class: 'muted', text: 'No frames, tracks or tiles inside this box.' }));
-    if (m.status !== 'complete') up.appendChild(el('li', { class: 'muted', text: 'Dots appear when the capture is complete.' }));
+    if (m.status === 'complete' && !m.points.length) up.appendChild(el('li', { class: 'muted', text: 'No frames, tracks or tiles inside this box (or none were asked for).' }));
+    if (m.status !== 'complete') up.appendChild(el('li', { class: 'muted', text: 'Dots appear when the download is complete.' }));
 
     var uc = $('d-cat'); uc.innerHTML = '';
     m.catalogue.forEach(function (c) {
@@ -171,6 +266,7 @@
       if (job) btn.disabled = true;
       uc.appendChild(el('li', {}, [el('div', { class: 'row' }, [el('span', {}, [c.title, el('small', { text: sub })]), btn])]));
     });
+    if (!m.catalogue.length && m.status === 'complete') uc.appendChild(el('li', { class: 'muted', text: 'Not asked for in this capture.' }));
 
     var uf = $('d-files'); uf.innerHTML = '';
     m.files.slice(0, 60).forEach(function (f) { uf.appendChild(el('li', {}, [el('a', { href: '/captures/' + m.id + '/' + f.name, target: '_blank', rel: 'noopener', text: f.name }), el('span', { text: fmtB(f.bytes) })])); });
@@ -178,7 +274,7 @@
     $('d-path').textContent = m.dir;
     var un = $('d-notes'); un.innerHTML = ''; m.notes.forEach(function (n) { un.appendChild(el('li', { text: n })); });
 
-    sync(fit);
+    sync(); applyWant();
   }
   $('copy-path').onclick = function () {
     var t = $('d-path').textContent, b = $('copy-path');
@@ -190,7 +286,7 @@
     if (on && !overlays[key]) { overlays[key] = make().addTo(map); }
     if (!on && overlays[key]) { map.removeLayer(overlays[key]); delete overlays[key]; }
   }
-  function sync(fit) {
+  function sync() {
     var m = cur, base = '/captures/' + m.id + '/';
     setLayer('outline', vis.outline, function () { return L.polygon(m.ring, { color: RED, weight: 2, fill: false, interactive: false }); });
     m.layers.forEach(function (l) {
@@ -217,13 +313,12 @@
       builtFor = m.id;
       markers = m.points.map(function (p) {
         var mk = L.marker([p.lat, p.lon], { icon: L.divIcon({ className: '', html: '<div class="pt" style="--c:' + KIND[p.kind].c + '"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }), title: p.title, keyboard: true });
-        mk.p = p; mk.on('click', function () { openPoint(p.i, 0); }); return mk;
+        mk.p = p; mk.on('click', function () { nav(m.id + '&p' + p.i); }); return mk;
       });
     }
     markers.forEach(function (mk) { var on = !!vis['p_' + mk.p.kind]; if (on && !map.hasLayer(mk)) mk.addTo(map); if (!on && map.hasLayer(mk)) map.removeLayer(mk); });
     spread();
-    if (deep && m.status === 'complete') { var d = deep; deep = null; if (d === '3d') open3d(); else if (/^p\d+$/.test(d) && m.points[+d.slice(1)]) openPoint(+d.slice(1), 0); }
-    if (fit) map.fitBounds([[m.bbox.south, m.bbox.west], [m.bbox.north, m.bbox.east]], { padding: [60, 60] });
+    if (fitNext) { fitNext = false; map.fitBounds([[m.bbox.south, m.bbox.west], [m.bbox.north, m.bbox.east]], { padding: [120, 120] }); }
   }
   // dots that fall on the same spot are fanned out so each one can be clicked
   function spread() {
@@ -244,25 +339,26 @@
 
   // -------------------------------------------------------------- viewer
   var vp = null;
-  function closeViewer() { $('viewer').hidden = true; vp = null; markers.forEach(function (mk) { if (mk._icon) mk._icon.firstChild.classList.remove('on'); }); }
-  $('v-close').onclick = closeViewer;
-  function openPoint(i, tile) {
+  function hideViewer() { $('viewer').hidden = true; vp = null; markers.forEach(function (mk) { if (mk._icon) mk._icon.firstChild.classList.remove('on'); }); }
+  $('v-close').onclick = function () { if (cur) nav(cur.id); };
+  function showPoint(i, tile) {
     var m = cur, p = m.points[i], same = m.points.filter(function (x) { return x.kind === p.kind; }), pos = same.indexOf(p);
+    if (vp === i && !tile) return;
     vp = i; $('viewer').hidden = false; $('v-img').hidden = true; $('v-wait').hidden = false; $('v-wait').textContent = p.kind === 'nac' ? 'Reading the frame from the LROC archive…' : p.kind === 'radar' ? 'Downloading the track from JAXA (45 MB the first time)…' : 'Loading…';
     $('v-kind').textContent = KIND[p.kind].name + ' · ' + (pos + 1) + ' of ' + same.length;
     $('v-title').textContent = p.title; $('v-text').textContent = p.text; $('v-extra').textContent = '';
     markers.forEach(function (mk) { if (mk._icon) mk._icon.firstChild.classList.toggle('on', mk.p.i === i); });
     var tools = $('v-tools'); tools.innerHTML = '';
-    if (same.length > 1) {
-      tools.appendChild(el('button', { type: 'button', text: '← Previous', on: function () { openPoint(same[(pos - 1 + same.length) % same.length].i, 0); } }));
-      tools.appendChild(el('button', { type: 'button', text: 'Next →', on: function () { openPoint(same[(pos + 1) % same.length].i, 0); } }));
+    if (same.length > 1) {   // stepping through points replaces the address, so Back leaves the viewer in one press
+      tools.appendChild(el('button', { type: 'button', text: '← Previous', on: function () { nav(m.id + '&p' + same[(pos - 1 + same.length) % same.length].i, true); } }));
+      tools.appendChild(el('button', { type: 'button', text: 'Next →', on: function () { nav(m.id + '&p' + same[(pos + 1) % same.length].i, true); } }));
     }
     api('/api/captures/' + m.id + '/point/' + i + '?i=' + tile).then(function (r) {
       if (vp !== i) return;
-      var base = '/captures/' + m.id + '/', img = $('v-img'), show = function (src) { img.onload = function () { img.hidden = false; $('v-wait').hidden = true; }; img.src = base + src; img.alt = p.title; };
-      show(r.img); $('v-extra').textContent = r.extra || '';
-      if (r.n > 1) tools.appendChild(el('button', { type: 'button', text: 'Tile ' + (r.i + 1) + ' of ' + r.n + ' →', on: function () { openPoint(i, r.i + 1); } }));
-      if (r.more) { var wide = false, b = el('button', { type: 'button', text: 'Wide view', on: function () { wide = !wide; b.textContent = wide ? 'Close-up' : 'Wide view'; show(wide ? r.more : r.img); } }); tools.appendChild(b); }
+      var base = '/captures/' + m.id + '/', img = $('v-img'), put = function (src) { img.onload = function () { img.hidden = false; $('v-wait').hidden = true; }; img.src = base + src; img.alt = p.title; };
+      put(r.img); $('v-extra').textContent = r.extra || '';
+      if (r.n > 1) tools.appendChild(el('button', { type: 'button', text: 'Tile ' + (r.i + 1) + ' of ' + r.n + ' →', on: function () { showPoint(i, r.i + 1); } }));
+      if (r.more) { var wide = false, b = el('button', { type: 'button', text: 'Wide view', on: function () { wide = !wide; b.textContent = wide ? 'Close-up' : 'Wide view'; put(wide ? r.more : r.img); } }); tools.appendChild(b); }
       if (r.download) {
         var d = el('button', { type: 'button', text: 'Download full frame · ' + fmtB(r.download.bytes), on: function () { d.disabled = true; d.textContent = 'Downloading into the capture folder…'; api('/api/captures/' + m.id + '/fetch', { type: r.download.type, id: r.download.id }); } });
         tools.appendChild(d);
@@ -272,28 +368,31 @@
 
   // ------------------------------------------------------------------ 3D
   var three = null;
-  function close3d() { $('three').hidden = true; if (three) { cancelAnimationFrame(three.raf); three.renderer.dispose(); $('t-canvas').innerHTML = ''; three = null; } }
-  $('t-close').onclick = close3d;
-  function open3d() {
-    if (!window.THREE || !THREE.GLTFLoader) { alert('The 3D viewer could not be loaded (no network?). The mesh file is mesh.glb in the capture folder.'); return; }
-    close3d(); $('three').hidden = false;
-    var box = $('t-canvas'), w = box.clientWidth, h = box.clientHeight, m = cur;
-    var renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); renderer.setSize(w, h); renderer.outputEncoding = THREE.sRGBEncoding; box.appendChild(renderer.domElement);
+  function hide3d() { $('three').hidden = true; if (three) { cancelAnimationFrame(three.raf); window.removeEventListener('resize', three.fit); three.renderer.dispose(); $('t-canvas').innerHTML = ''; three = null; } }
+  $('t-close').onclick = function () { if (cur) nav(cur.id); };
+  function show3d() {
+    if (three && three.id === cur.id) return;
+    if (!window.THREE || !THREE.GLTFLoader) { alert('The 3D viewer could not be loaded (no network?). The mesh file is mesh.glb in the capture folder.'); nav(cur.id, true); return; }
+    hide3d(); $('three').hidden = false;
+    var box = $('t-canvas'), m = cur;
+    var renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); renderer.outputEncoding = THREE.sRGBEncoding; box.appendChild(renderer.domElement);
     var scene = new THREE.Scene(); scene.background = new THREE.Color(0x05060b);
-    var size = Math.max(m.mesh.width_m, m.mesh.height_m), cam = new THREE.PerspectiveCamera(40, w / h, size / 1000, size * 20);
-    cam.position.set(0, size * 0.75, size * 1.1);
-    var ctl = new THREE.OrbitControls(cam, renderer.domElement); ctl.maxPolarAngle = Math.PI / 2;
-    scene.add(new THREE.AmbientLight(0xffffff, 1.0));
-    three = { renderer: renderer, raf: 0, obj: null };
+    var size = Math.max(m.mesh.width_m, m.mesh.height_m), cam = new THREE.PerspectiveCamera(38, 1, size / 1000, size * 30);
+    var ctl = new THREE.OrbitControls(cam, renderer.domElement); ctl.maxPolarAngle = Math.PI / 2; ctl.enableDamping = true;
+    var home = function () { cam.position.set(0, size * 1.05, size * 1.7); ctl.target.set(0, 0, 0); ctl.update(); };   // the mesh sits at the origin: always start centred
+    var fit = function () { var w = box.clientWidth, h = box.clientHeight; if (!w || !h) return; renderer.setSize(w, h); cam.aspect = w / h; cam.updateProjectionMatrix(); };
+    fit(); home(); window.addEventListener('resize', fit);
+    three = { renderer: renderer, raf: 0, obj: null, id: m.id, fit: fit };
+    $('t-reset').onclick = home;
     var stamp = (m.files.filter(function (f) { return f.name === 'mesh.glb'; })[0] || {}).bytes || 0;
     new THREE.GLTFLoader().load('/captures/' + m.id + '/mesh.glb?v=' + stamp, function (g) {
-      if (!three) return;
+      if (!three || three.id !== m.id) return;
       g.scene.traverse(function (o) { if (o.isMesh) { o.material = new THREE.MeshBasicMaterial({ map: o.material.map, side: THREE.DoubleSide }); } });
       three.obj = g.scene; scene.add(g.scene); exag();
     });
     function exag() { var v = parseFloat($('t-exag').value); $('t-exag-v').textContent = v; if (three && three.obj) { three.obj.scale.y = v; three.obj.position.y = -m.mesh.relief_m * v / 2; } }
     $('t-exag').oninput = exag;
-    (function loop() { if (!three) return; three.raf = requestAnimationFrame(loop); ctl.update(); renderer.render(scene, cam); })();
+    (function loop() { if (!three || three.id !== m.id) return; three.raf = requestAnimationFrame(loop); ctl.update(); renderer.render(scene, cam); })();
   }
 
   // -------------------------------------------------------------- search
@@ -313,5 +412,7 @@
     }).catch(function () { ul.hidden = true; });
   });
 
-  loadList().then(function () { var h = location.hash.slice(1).split('&'); if (online && /^tav-[\w-]+$/.test(h[0])) { openCapture(h[0], true); if (h[1]) deep = h[1]; } });
+  $('q').addEventListener('keydown', function (e) { if (e.key === 'Enter') { var li = $('results').querySelector('li'); if (li && !$('results').hidden) li.click(); } });
+  $('caplist').addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.classList.contains('cap')) e.target.click(); });
+  loadList().then(route);
 })();

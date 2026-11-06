@@ -1,4 +1,4 @@
-/* The Hamilton Project · night chart
+/* Tav · night chart
  * Rules: one black sheet, white contour lines, Poppins text, mono labels.
  * Colour: four fluorescent inks (blue, violet, pink, green), used for the globe, accents and glows.
  */
@@ -125,7 +125,7 @@ figure img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; o
 .figs.four img { aspect-ratio: 1; object-fit: cover; }
 figcaption { display: block; margin: 8px 2px 2px; }
 
-/* 7 · Site: page index (home) and page list (every footer) ---------------- */
+/* 7 · Site: tool + studies index (home) and the same list in every footer ---------------- */
 .pages { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; }
 .pages a { font: 500 19.5px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--blue); text-decoration: none; }
 .pages a:hover { text-decoration: underline; text-underline-offset: 4px; }
@@ -145,19 +145,24 @@ body:has(.home) .wrap { max-width: 1480px; }
 .quote { margin: 36px 0 0; padding: 2px 0 2px 22px; border-left: 2px solid var(--violet); max-width: 34em; }
 .quote p { font: italic 300 24.7px/1.7 var(--font); color: var(--ink-2); margin: 0 0 14px; }
 .quote footer { border: 0; margin: 0; font-size: 16.2px; }
-#pages { padding-top: 128px; }
+#tool { padding-top: 128px; }
+#studies { padding-top: 96px; }
 .panel { padding: 0; border: 0; background: none; }
 .panel figcaption { margin: 4px 6px 0; }
 .head.center { justify-content: center; border-bottom: 0; padding-bottom: 0; margin-bottom: 36px; }
 .head.center h2 { font-size: 46.8px; }
 footer .made { text-transform: none; letter-spacing: .04em; }
 .brand { display: inline-flex; align-items: center; gap: 12px; }
-.brand svg { width: 28px; height: 28px; }
+.brand .glyph { font: 600 40px "Arial Hebrew", "SF Hebrew", Arial, sans-serif; line-height: 1; color: var(--accent); }
 
 /* Four tiles on one row; two per row on a tablet, one on a phone */
 .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
 @media (max-width: 1100px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .tiles { grid-template-columns: minmax(0, 1fr); } }
+/* Tool section: a single tile, the same width as a study tile, centred */
+.tiles.one { grid-template-columns: minmax(0, calc((100% - 72px) / 4)); justify-content: center; }
+@media (max-width: 1100px) { .tiles.one { grid-template-columns: minmax(0, calc((100% - 24px) / 2)); } }
+@media (max-width: 560px) { .tiles.one { grid-template-columns: minmax(0, 1fr); } }
 .tile { display: block; padding: 8px 8px 20px; border: 1px solid var(--line); background: #0a0a0b; color: inherit; text-decoration: none; min-width: 0; }
 .tile:hover, .tile:focus-visible { border-color: var(--accent); outline: none; }
 .tile img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 3px; background: #000; }
@@ -204,7 +209,7 @@ footer .made { text-transform: none; letter-spacing: .04em; }
 .globe figcaption { margin-top: 12px; font-size: 16.9px; }
 
 /* Phone: the nav wraps onto two rows instead of pushing the page wider */
-@media (max-width: 560px) { .brand { font-size: 27.3px; } .brand svg { width: 22px; height: 22px; } nav .wrap { height: auto; flex-wrap: wrap; padding-top: 10px; padding-bottom: 10px; } nav .links { gap: 14px; } }
+@media (max-width: 560px) { .brand { font-size: 27.3px; } .brand .glyph { font-size: 32px; } nav .wrap { height: auto; flex-wrap: wrap; padding-top: 10px; padding-bottom: 10px; } nav .links { gap: 14px; } }
 
 /* 8 · Tool: description left, animated schematic right (software.html, drawn by software.js) */
 .tool { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 16px 40px; align-items: center;
