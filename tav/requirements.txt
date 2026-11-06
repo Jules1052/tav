@@ -1,0 +1,3 @@
+numpy
+pillow
+pyshp   # only for tav/build_index.py

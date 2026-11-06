@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tav ת · The Hamilton Project</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Poppins:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="style.css?v=18">
+<link rel="stylesheet" href="tav-app.css?v=1">
+</head>
+<body class="tavapp">
+
+<aside id="side">
+  <header>
+    <a class="back label" href="index.html">← The Hamilton Project</a>
+    <h1>Tav <span lang="he">ת</span></h1>
+    <p class="tag">Draw a box on the Moon. Tav downloads everything inside it.</p>
+  </header>
+
+  <section id="offline" hidden>
+    <p class="warn">The Tav server is not running, so the map works but nothing can be captured. Start it from the project folder with <code>./start.sh</code> and reload.</p>
+  </section>
+
+  <section id="home">
+    <span class="label">New capture</span>
+    <div class="tools">
+      <button type="button" id="draw-rect">▭ Rectangle</button>
+      <button type="button" id="draw-poly">⬠ Polygon</button>
+    </div>
+    <p class="hint" id="hint">Pick a shape, then draw on the map.</p>
+    <div id="pending" hidden>
+      <p class="big" id="pending-size"></p>
+      <div class="tools">
+        <button type="button" class="go" id="capture">Capture this box</button>
+        <button type="button" id="cancel">Cancel</button>
+      </div>
+    </div>
+    <span class="label mt">Captures</span>
+    <ul id="caplist" class="list"><li class="muted">None yet.</li></ul>
+  </section>
+
+  <section id="detail" hidden>
+    <button type="button" class="linkish label" id="to-home">← Captures</button>
+    <h2 id="d-title"></h2>
+    <p class="muted" id="d-sub"></p>
+    <ol id="d-steps" class="steps"></ol>
+
+    <span class="label mt">Layers</span>
+    <ul id="d-layers" class="list checks"></ul>
+
+    <span class="label mt">Points · click a dot on the map</span>
+    <ul id="d-points" class="list checks"></ul>
+
+    <span class="label mt">Everything else inside the box</span>
+    <p class="hint">Full files in the archives. Tav lists them; download what you need.</p>
+    <ul id="d-cat" class="list"></ul>
+
+    <span class="label mt">Files</span>
+    <ul id="d-files" class="list files"></ul>
+    <div class="path"><code id="d-path"></code><button type="button" id="copy-path">Copy path</button></div>
+    <ul id="d-notes" class="notes"></ul>
+  </section>
+</aside>
+
+<main id="stage">
+  <div id="map" aria-label="Map of the Moon"></div>
+  <div id="search">
+    <input id="q" type="search" placeholder="Search places on the Moon" autocomplete="off" aria-label="Search places on the Moon">
+    <ul id="results" hidden></ul>
+  </div>
+  <div id="zoom"><button type="button" id="zin" aria-label="Zoom in">+</button><button type="button" id="zout" aria-label="Zoom out">−</button></div>
+
+  <div id="viewer" hidden>
+    <button type="button" class="close" id="v-close" aria-label="Close">×</button>
+    <div class="pic"><img id="v-img" alt=""><p id="v-wait" class="muted">Loading…</p></div>
+    <div class="meta">
+      <span class="label" id="v-kind"></span>
+      <p class="t" id="v-title"></p>
+      <p class="x" id="v-text"></p>
+      <p class="x muted" id="v-extra"></p>
+      <div class="tools" id="v-tools"></div>
+    </div>
+  </div>
+
+  <div id="three" hidden>
+    <button type="button" class="close" id="t-close" aria-label="Close 3D view">×</button>
+    <div class="bar"><span class="label">3D mesh · drag to turn, scroll to zoom</span>
+      <label class="label">Height × <input type="range" id="t-exag" min="1" max="10" step="0.5" value="2"> <b id="t-exag-v">2</b></label></div>
+    <div id="t-canvas"></div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="tav-app.js?v=1"></script>
+</body>
+</html>

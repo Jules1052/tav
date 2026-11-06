@@ -1,0 +1,296 @@
+{
+"1": {
+"unit": "Cc",
+"name": "Crater Unit",
+"age": "Copernican",
+"color": "#FCDC0A"
+},
+"2": {
+"unit": "Ccc",
+"name": "Crater Cluster Unit",
+"age": "Copernican",
+"color": "#FDC602"
+},
+"3": {
+"unit": "Csc",
+"name": "Secondary Crater Unit",
+"age": "Copernican",
+"color": "#FFFFBE"
+},
+"4": {
+"unit": "Ec",
+"name": "Crater Unit",
+"age": "Eratosthenian",
+"color": "#A5CF30"
+},
+"5": {
+"unit": "Ecc",
+"name": "Crater Cluster Unit",
+"age": "Eratosthenian",
+"color": "#1AA946"
+},
+"6": {
+"unit": "EIp",
+"name": "Plateau Unit",
+"age": "Eratosthenian-Imbrian",
+"color": "#E64D75"
+},
+"7": {
+"unit": "Em",
+"name": "Mare Unit",
+"age": "Eratosthenian",
+"color": "#F20D0D"
+},
+"8": {
+"unit": "Esc",
+"name": "Secondary Crater Unit",
+"age": "Eratosthenian",
+"color": "#6FC400"
+},
+"9": {
+"unit": "Ib",
+"name": "Basin Undivided Unit",
+"age": "Imbrian",
+"color": "#446589"
+},
+"10": {
+"unit": "Ibm",
+"name": "Basin Massif Unit",
+"age": "Imbrian",
+"color": "#BC424D"
+},
+"11": {
+"unit": "Ic",
+"name": "Crater Undivided Unit",
+"age": "Imbrian",
+"color": "#6B20DF"
+},
+"12": {
+"unit": "Ic1",
+"name": "Lower Crater Unit",
+"age": "Imbrian",
+"color": "#2016F8"
+},
+"13": {
+"unit": "Ic2",
+"name": "Upper Crater Unit",
+"age": "Imbrian",
+"color": "#1C7BF6"
+},
+"14": {
+"unit": "Icc",
+"name": "Crater Cluster Unit",
+"age": "Imbrian",
+"color": "#97DBF2"
+},
+"15": {
+"unit": "Icf",
+"name": "Crater Fracture Floor Unit",
+"age": "Imbrian",
+"color": "#F38BB8"
+},
+"16": {
+"unit": "Id",
+"name": "Dark Mantling Unit",
+"age": "Imbrian",
+"color": "#FF3600"
+},
+"17": {
+"unit": "Ig",
+"name": "Grooved Terrain Unit",
+"age": "Imbrian",
+"color": "#73B2C2"
+},
+"18": {
+"unit": "Iia",
+"name": "Imbrium Alpes Formation Unit",
+"age": "Imbrian",
+"color": "#2A5ED4"
+},
+"19": {
+"unit": "Iiap",
+"name": "Imbrium Apenninus Formation Unit",
+"age": "Imbrian",
+"color": "#704489"
+},
+"20": {
+"unit": "Iic",
+"name": "Imbrium Crater Unit",
+"age": "Imbrian",
+"color": "#1091CA"
+},
+"21": {
+"unit": "Iif",
+"name": "Imbrium Fra Mauro Formation Unit",
+"age": "Imbrian",
+"color": "#AA58E0"
+},
+"22": {
+"unit": "Im1",
+"name": "Lower Mare Unit",
+"age": "Imbrian",
+"color": "#E500C5"
+},
+"23": {
+"unit": "Im2",
+"name": "Upper Mare Unit",
+"age": "Imbrian",
+"color": "#FF3361"
+},
+"24": {
+"unit": "Imd",
+"name": "Mare Dome Unit",
+"age": "Imbrian",
+"color": "#FD029B"
+},
+"25": {
+"unit": "INp",
+"name": "Plains Unit",
+"age": "Imbrian-Nectarian",
+"color": "#73B2C2"
+},
+"26": {
+"unit": "INt",
+"name": "Terra Unit",
+"age": "Imbrian-Nectarian",
+"color": "#CCABAB"
+},
+"27": {
+"unit": "Iohi",
+"name": "Orientale Hevelius Formation, Inner Facies Unit",
+"age": "Imbrian",
+"color": "#A6D6FF"
+},
+"28": {
+"unit": "Ioho",
+"name": "Orientale Hevelius Formation, Inner Facies Unit",
+"age": "Imbrian",
+"color": "#C4E8FF"
+},
+"29": {
+"unit": "Iohs",
+"name": "Orientale Hevelius Formation, Secondary Crater Facies Unit",
+"age": "Imbrian",
+"color": "#00ABB3"
+},
+"30": {
+"unit": "Iom",
+"name": "Orientale Maunder Formation Unit",
+"age": "Imbrian",
+"color": "#7695DB"
+},
+"31": {
+"unit": "Iork",
+"name": "Orientale Montes Rook Formation, Knobby Facies Unit",
+"age": "Imbrian",
+"color": "#52BAFC"
+},
+"32": {
+"unit": "Iorm",
+"name": "Orientale Montes Rook Formation, Massif Facies Unit",
+"age": "Imbrian",
+"color": "#465FB8"
+},
+"33": {
+"unit": "Ip",
+"name": "Plains Unit",
+"age": "Imbrian",
+"color": "#CBA4CD"
+},
+"34": {
+"unit": "Isc",
+"name": "Secondary Crater Unit",
+"age": "Imbrian",
+"color": "#004DA8"
+},
+"35": {
+"unit": "It",
+"name": "Terra Unit",
+"age": "Imbrian",
+"color": "#CEA7F1"
+},
+"36": {
+"unit": "Itd",
+"name": "Terra Dome Unit",
+"age": "Imbrian",
+"color": "#00A9E6"
+},
+"37": {
+"unit": "Nb",
+"name": "Basin Undivided Unit",
+"age": "Nectarian",
+"color": "#F4C884"
+},
+"38": {
+"unit": "Nbl",
+"name": "Basin Lineated Unit",
+"age": "Nectarian",
+"color": "#FFCDB9"
+},
+"39": {
+"unit": "Nbm",
+"name": "Basin Massif Unit",
+"age": "Nectarian",
+"color": "#FFCCBD"
+},
+"40": {
+"unit": "Nbsc",
+"name": "Basin Secondary Crater Unit",
+"age": "Nectarian",
+"color": "#F4A164"
+},
+"41": {
+"unit": "Nc",
+"name": "Crater Unit",
+"age": "Nectarian",
+"color": "#C96936"
+},
+"42": {
+"unit": "Nnj",
+"name": "Nectaris Janssen Formation Unit",
+"age": "Nectarian",
+"color": "#FFFFBE"
+},
+"43": {
+"unit": "Np",
+"name": "Plains Unit",
+"age": "Nectarian",
+"color": "#F0BCAD"
+},
+"44": {
+"unit": "Nt",
+"name": "Terra Unit",
+"age": "Nectarian",
+"color": "#FBD5D3"
+},
+"45": {
+"unit": "Ntp",
+"name": "Plains and Mantling, Terra Unit",
+"age": "Nectarian",
+"color": "#EFBECF"
+},
+"46": {
+"unit": "pNb",
+"name": "Basin Undivided Unit",
+"age": "Pre-Nectarian",
+"color": "#65442F"
+},
+"47": {
+"unit": "pNbm",
+"name": "Basin Massif Unit",
+"age": "Pre-Nectarian",
+"color": "#4E3A37"
+},
+"48": {
+"unit": "pNc",
+"name": "Crater Unit",
+"age": "Pre-Nectarian",
+"color": "#7A3E29"
+},
+"49": {
+"unit": "pNt",
+"name": "Terra Unit",
+"age": "Pre-Nectarian",
+"color": "#DC9F91"
+}
+}

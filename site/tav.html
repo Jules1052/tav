@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Poppins:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="style.css?v=17">
+<link rel="stylesheet" href="style.css?v=18">
 </head>
 <body>
 <nav>
@@ -16,6 +16,8 @@
     <div class="links">
       <a class="label" href="#tav">Tav ↓</a>
       <a class="label" href="#layers">Layers ↓</a>
+      <a class="label" href="#samples">Samples ↓</a>
+      <a class="label" href="tav-app.html">Open Tav →</a>
     </div>
   </div>
 </nav>
@@ -25,7 +27,7 @@
     <div class="label">Page 03 · Build plan</div>
     <h1>Aleph for the Moon</h1>
     <div class="name">Tav <span lang="he">ת</span></div>
-    <p class="lede">A tool that takes a point on the Moon and downloads everything known about it, so an agent can look at the place. Not built yet.</p>
+    <p class="lede">A tool that takes a point on the Moon and downloads everything known about it, so an agent can look at the place. A first version works: <a href="tav-app.html">open the Tav map</a>.</p>
   </div>
 </header>
 
@@ -61,36 +63,150 @@ marius-pit/
     <div class="scroll"><table class="links">
       <tr><th>Aleph Earth</th><th>Lunar equivalent</th><th>Resolution</th><th>Notes</th><th>Do we have it?</th></tr>
       <tr><td>Satellite imagery</td><td>LROC NAC</td><td>0.5–2 m per pixel</td><td>Many frames of the same spot at different sun angles</td><td>Yes, in part: tiles and crops around hardware sites in <a href="https://huggingface.co/datasets/jules1235813/xenarch">Xenarch</a>. The rest: <a href="https://ode.rsl.wustl.edu/moon/">ODE</a> · <a href="https://pds.lroc.im-ldi.com/data/">LROC PDS</a></td></tr>
-      <tr><td></td><td>LROC WAC, global mosaic</td><td>100 m per pixel</td><td>Context</td><td>No · <a href="https://trek.nasa.gov/moon/">NASA Moon Trek</a></td></tr>
-      <tr><td></td><td>Kaguya Terrain Camera</td><td>about 10 m per pixel</td><td>Near-global coverage</td><td>No · <a href="https://darts.isas.jaxa.jp/planet/pdap/selene/">JAXA DARTS</a></td></tr>
+      <tr><td></td><td>LROC WAC, global mosaic</td><td>100 m per pixel</td><td>Context</td><td>Sample · <a href="https://trek.nasa.gov/moon/">NASA Moon Trek</a></td></tr>
+      <tr><td></td><td>Kaguya Terrain Camera</td><td>about 10 m per pixel</td><td>Near-global coverage</td><td>Sample · <a href="https://darts.isas.jaxa.jp/planet/pdap/selene/">JAXA DARTS</a></td></tr>
       <tr><td></td><td>Chandrayaan-2 OHRC</td><td>about 0.25 m per pixel</td><td>The sharpest, but limited coverage</td><td>Yes, in part: 300 tiles from three scenes in <a href="https://huggingface.co/datasets/jules1235813/xenarch">Xenarch</a>. The rest: ISRO PRADAN portal</td></tr>
-      <tr><td>Elevation</td><td>LOLA / SLDEM</td><td>60–120 m per pixel</td><td>Global</td><td>No · <a href="https://pds-geosciences.wustl.edu/missions/lro/lola.htm">LOLA, PDS</a> · <a href="https://pgda.gsfc.nasa.gov/products/54">SLDEM, PGDA</a></td></tr>
-      <tr><td></td><td>Stereo DTMs from NAC</td><td>2–5 m per pixel</td><td>Chosen sites only</td><td>No · <a href="https://data.lroc.im-ldi.com/lroc/rdr_product_select">LROC data products</a></td></tr>
+      <tr><td>Elevation</td><td>LOLA / SLDEM</td><td>60–120 m per pixel</td><td>Global</td><td>Sample · <a href="https://pds-geosciences.wustl.edu/missions/lro/lola.htm">LOLA, PDS</a> · <a href="https://pgda.gsfc.nasa.gov/products/54">SLDEM, PGDA</a></td></tr>
+      <tr><td></td><td>Stereo DTMs from NAC</td><td>2–5 m per pixel</td><td>Chosen sites only</td><td>Sample · <a href="https://data.lroc.im-ldi.com/lroc/rdr_product_select">LROC data products</a></td></tr>
       <tr><td>3D mesh</td><td>No ready-made mesh</td><td>—</td><td>Made by draping the images over the elevation. Good only where a NAC DTM exists</td><td>No · nothing to download, we generate it</td></tr>
-      <tr><td>Street View</td><td>Surface photos from Apollo, Chang’e / Yutu, Lunokhod</td><td>—</td><td>Only at a handful of landing sites</td><td>No · <a href="https://www.nasa.gov/history/alsj-and-afj/">Apollo Lunar Surface Journal</a> · <a href="https://moon.bao.ac.cn/">Chang’e data, CNSA</a></td></tr>
-      <tr><td>OpenStreetMap</td><td>IAU names (Gazetteer), crater catalogues, Lunar Pit Atlas (over 200 pits), USGS geologic map, landing sites</td><td>—</td><td>Vector data spread over different sources, not one database</td><td>No · <a href="https://planetarynames.wr.usgs.gov/">Gazetteer</a> · <a href="https://astrogeology.usgs.gov/search/map/moon_crater_database_v1_robbins">Crater database</a> · <a href="https://www.lroc.asu.edu/atlases">Pit Atlas</a> · <a href="https://astrogeology.usgs.gov/search/map/unified_geologic_map_of_the_moon_1_5m_2020">Geologic map</a></td></tr>
+      <tr><td>Street View</td><td>Surface photos from Apollo, Chang’e / Yutu, Lunokhod</td><td>—</td><td>Only at a handful of landing sites</td><td>Sample (Apollo only) · <a href="https://www.nasa.gov/history/alsj-and-afj/">Apollo Lunar Surface Journal</a> · <a href="https://moon.bao.ac.cn/">Chang’e data, CNSA</a></td></tr>
+      <tr><td>OpenStreetMap</td><td>IAU names (Gazetteer), crater catalogues, Lunar Pit Atlas (over 200 pits), USGS geologic map, landing sites</td><td>—</td><td>Vector data spread over different sources, not one database</td><td>Sample · <a href="https://planetarynames.wr.usgs.gov/">Gazetteer</a> · <a href="https://astrogeology.usgs.gov/search/map/moon_crater_database_v1_robbins">Crater database</a> · <a href="https://www.lroc.asu.edu/atlases">Pit Atlas</a> · <a href="https://astrogeology.usgs.gov/search/map/unified_geologic_map_of_the_moon_1_5m_2020">Geologic map</a></td></tr>
     </table></div>
 
     <span class="label sub mt">Extra layers · not in Aleph Earth, useful for caves</span>
     <div class="scroll"><table class="links">
       <tr><th>Layer</th><th>What it is</th><th>Resolution</th><th>Do we have it?</th></tr>
-      <tr><td>Diviner</td><td>Night-time temperature</td><td>about 240 m per pixel</td><td>No · <a href="https://pds-geosciences.wustl.edu/missions/lro/diviner.htm">PDS Geosciences</a></td></tr>
-      <tr><td>GRAIL</td><td>Gravity</td><td>a few km</td><td>No · <a href="https://pds-geosciences.wustl.edu/missions/grail/default.htm">PDS Geosciences</a></td></tr>
-      <tr><td>Kaguya radar sounder</td><td>Radar below the surface</td><td>single tracks</td><td>No · <a href="https://darts.isas.jaxa.jp/planet/pdap/selene/">JAXA DARTS</a></td></tr>
-      <tr><td>Mini-RF</td><td>Radar images</td><td>partial coverage</td><td>No · <a href="https://pds-geosciences.wustl.edu/missions/lro/mrf.htm">PDS Geosciences</a></td></tr>
-      <tr><td>M³ and Kaguya</td><td>Mineral composition maps</td><td>—</td><td>No · <a href="https://pds-imaging.jpl.nasa.gov/volumes/m3.html">M³, PDS Imaging</a> · <a href="https://darts.isas.jaxa.jp/planet/pdap/selene/">JAXA DARTS</a></td></tr>
+      <tr><td>Diviner</td><td>Night-time temperature</td><td>about 240 m per pixel</td><td>Sample · <a href="https://pds-geosciences.wustl.edu/missions/lro/diviner.htm">PDS Geosciences</a></td></tr>
+      <tr><td>GRAIL</td><td>Gravity</td><td>a few km</td><td>Sample · <a href="https://pds-geosciences.wustl.edu/missions/grail/default.htm">PDS Geosciences</a></td></tr>
+      <tr><td>Kaguya radar sounder</td><td>Radar below the surface</td><td>single tracks</td><td>Sample · <a href="https://darts.isas.jaxa.jp/planet/pdap/selene/">JAXA DARTS</a></td></tr>
+      <tr><td>Mini-RF</td><td>Radar images</td><td>partial coverage</td><td>Sample · <a href="https://pds-geosciences.wustl.edu/missions/lro/mrf.htm">PDS Geosciences</a></td></tr>
+      <tr><td>M³ and Kaguya</td><td>Mineral composition maps</td><td>—</td><td>Sample · <a href="https://pds-imaging.jpl.nasa.gov/volumes/m3.html">M³, PDS Imaging</a> · <a href="https://darts.isas.jaxa.jp/planet/pdap/selene/">JAXA DARTS</a></td></tr>
     </table></div>
+  </section>
+
+  <section id="samples">
+    <div class="head"><span class="label">03</span><h2>Samples on disk</h2><span class="label">downloaded 6 Nov 2026 · test point: Marius Hills pit</span></div>
+    <p class="note">We downloaded a sample of every layer above into <code>data/tav/</code> (not in git). Rule: a source under 1 GB is taken whole, a bigger one gives one product over the Marius Hills pit, 14.09° N, 303.23° E. Every number below was measured on the downloaded files.</p>
+
+    <div class="stats">
+      <div class="stat"><span class="label">On disk</span><b>5.5 GB · 600 files</b></div>
+      <div class="stat"><span class="label">Sources sampled</span><b>19 of 20</b></div>
+      <div class="stat hot"><span class="label">NAC frames over the pit</span><b>57</b></div>
+    </div>
+
+    <div class="figs four mt">
+      <figure><a href="img/tav/nac.jpg"><img src="img/tav/nac.jpg" width="480" height="480" loading="lazy" alt="Marius Hills pit seen from above: a round hole with a sunlit floor and a crescent shadow"></a>
+        <figcaption class="label">LROC NAC · 232 m across · 0.48 m per pixel</figcaption></figure>
+      <figure><a href="img/tav/tc.jpg"><img src="img/tav/tc.jpg" width="480" height="480" loading="lazy" alt="Kaguya Terrain Camera image of a sinuous rille with the pit as a small dark dot"></a>
+        <figcaption class="label">Kaguya TC ortho · 3.6 km across</figcaption></figure>
+      <figure><a href="img/tav/tcdtm.jpg"><img src="img/tav/tcdtm.jpg" width="480" height="480" loading="lazy" alt="Kaguya elevation of the same area, the rille shows as a dark band"></a>
+        <figcaption class="label">Kaguya TC elevation · 3.6 km across</figcaption></figure>
+      <figure><a href="img/tav/nacdtm.jpg"><img src="img/tav/nacdtm.jpg" width="480" height="480" loading="lazy" alt="NAC stereo elevation model, the pit is a small dark dot in the rille floor"></a>
+        <figcaption class="label">NAC stereo DTM · 1.9 km across</figcaption></figure>
+      <figure><a href="img/tav/wac.jpg"><img src="img/tav/wac.jpg" width="480" height="480" loading="lazy" alt="Wide Angle Camera mosaic of the Marius Hills region"></a>
+        <figcaption class="label">LROC WAC · 176 km across</figcaption></figure>
+      <figure><a href="img/tav/lola.jpg"><img src="img/tav/lola.jpg" width="480" height="480" loading="lazy" alt="LOLA elevation map of western Oceanus Procellarum"></a>
+        <figcaption class="label">LOLA elevation · 30° across</figcaption></figure>
+      <figure><a href="img/tav/sldem.jpg"><img src="img/tav/sldem.jpg" width="480" height="480" loading="lazy" alt="SLDEM elevation with rilles running across the plain"></a>
+        <figcaption class="label">SLDEM elevation · 28 km across</figcaption></figure>
+      <figure><a href="img/tav/grail.jpg"><img src="img/tav/grail.jpg" width="480" height="480" loading="lazy" alt="GRAIL gravity anomaly map, light and dark patches"></a>
+        <figcaption class="label">GRAIL gravity · 30° across</figcaption></figure>
+      <figure><a href="img/tav/diviner.jpg"><img src="img/tav/diviner.jpg" width="480" height="480" loading="lazy" alt="Curve of surface temperature over a lunar day: about 100 K at night, close to 390 K at noon"></a>
+        <figcaption class="label">Diviner · temperature in K by local hour</figcaption></figure>
+      <figure><a href="img/tav/lrs.jpg"><img src="img/tav/lrs.jpg" width="480" height="480" loading="lazy" alt="Radar sounder profile: a bright surface line with faint echoes below"></a>
+        <figcaption class="label">Kaguya radar sounder · depth profile</figcaption></figure>
+      <figure><a href="img/tav/minirf.jpg"><img src="img/tav/minirf.jpg" width="480" height="480" loading="lazy" alt="Mini-RF radar image with bright crater rims; the strip ends at the right edge"></a>
+        <figcaption class="label">Mini-RF radar · 7.1 km across</figcaption></figure>
+      <figure><a href="img/tav/m3.jpg"><img src="img/tav/m3.jpg" width="480" height="480" loading="lazy" alt="M3 spectrometer image at 750 nm with rilles and craters"></a>
+        <figcaption class="label">M³ at 750 nm · 42 km across</figcaption></figure>
+      <figure><a href="img/tav/mi.jpg"><img src="img/tav/mi.jpg" width="480" height="480" loading="lazy" alt="Kaguya Multiband Imager false-colour image, fresh craters in blue-green"></a>
+        <figcaption class="label">Kaguya MI false colour · 7.1 km across</figcaption></figure>
+      <figure><a href="img/tav/vector.jpg"><img src="img/tav/vector.jpg" width="480" height="480" loading="lazy" alt="Map drawn from the catalogues: crater outlines in blue, pits in pink, IAU names in white"></a>
+        <figcaption class="label">Craters, pits, names · 121 km across</figcaption></figure>
+      <figure><a href="img/tav/xenarch.jpg"><img src="img/tav/xenarch.jpg" width="480" height="480" loading="lazy" alt="NAC crop of the Apollo 11 landing area from the Xenarch dataset"></a>
+        <figcaption class="label">Xenarch crop · Apollo 11 site</figcaption></figure>
+      <figure><a href="img/tav/apollo.jpg"><img src="img/tav/apollo.jpg" width="480" height="480" loading="lazy" alt="Astronaut James Irwin salutes the flag next to the lunar module and rover, Apollo 15"></a>
+        <figcaption class="label">Surface photo · Apollo 15 · NASA</figcaption></figure>
+    </div>
+
+    <span class="label sub mt">Format and statistics · one row per source</span>
+    <div class="scroll"><table>
+      <tr><th>Layer</th><th>Format</th><th>Sample on disk</th><th>What the numbers say</th></tr>
+      <tr><td>LROC NAC</td><td>PDS3 <code>.IMG</code>, label inside the file. 16-bit integers, brightness = value × 3.05e-5. Not map-projected</td><td>1 frame of 57, M122584310LC · 5,064 × 52,224 px · 529 MB</td><td>0.48 m per pixel, sun 25° from vertical. The 57 frames span sun angles from 12° to 160°; 13 were taken at night. A frame has no coordinates per pixel: we found the pit by its shadow, at line 30,792</td></tr>
+      <tr><td>LROC WAC</td><td>PDS3 <code>.IMG</code>, 32-bit float, plus a GeoTIFF copy</td><td>Whole Moon at 948 m per pixel · 5,760 × 11,520 px · 321 MB</td><td>The 100 m mosaic is 8 tiles of 2.9 GB each, so we took the 32 pixel-per-degree version. Mean brightness 0.046, at the pit 0.019: dark mare lava</td></tr>
+      <tr><td>Kaguya TC</td><td>PDS3 <code>.img</code> + <code>.lbl</code>, 16-bit big-endian</td><td>1 tile of 3° × 3°, image and elevation · 12,288 × 12,288 px · 577 MB</td><td>7.4 m per pixel. Tile heights from −2,218 to −598 m. The pit shows as a 28 m dip (real depth 40 m)</td></tr>
+      <tr><td>Xenarch</td><td>PNG crops 2,048 × 2,048, 8-bit, with CSV and COCO JSON catalogues</td><td>123 of 11,593 files · 280 MB of 4.0 GB</td><td>4,633 catalogued frames (4,133 Moon, 500 Mars) over 100 hardware sites. Moon median 0.98 m per pixel. Needs a Hugging Face login</td></tr>
+      <tr><td>Chandrayaan-2 OHRC</td><td>PNG tiles 1,024 × 1,024, 8-bit, with a CSV giving latitude and longitude per tile</td><td>All 300 tiles in Xenarch · 139 MB</td><td>Three scenes at 62–74° S, 0.23–0.26 m per pixel: the sharpest images we hold. Each tile is a dot in the Tav map. The full archive at ISRO PRADAN needs an account</td></tr>
+      <tr><td>LOLA</td><td>PDS3 <code>.img</code> + <code>.lbl</code>, 16-bit, height = value × 0.5 m. JPEG 2000 copy</td><td>Whole Moon at 4, 16 and 64 pixels per degree · up to 11,520 × 23,040 px · 789 MB</td><td>474 m per pixel at best. Lowest point −8,982 m at 70.3° S 187.5° E, highest +10,686 m at 5.4° N 201.3° E. Pit rim at −1,566 m</td></tr>
+      <tr><td>SLDEM</td><td>JPEG 2000, signed 16-bit, height = value × 0.5 m</td><td>1 tile of 32, 0–30° N 270–315° E · 23,040 × 15,360 px · 177 MB</td><td>59 m per pixel. Gives −1,569 m at the pit, 3 m from LOLA. The scaling is not in the label: we inferred it from LOLA. The float version of the tile is 1.6 GB</td></tr>
+      <tr><td>NAC stereo DTM</td><td>GeoTIFF, 32-bit float, metres</td><td>MARIUSPIT01 elevation, shaded relief and 4 m orthophotos · 3,331 × 12,529 px · 519 MB</td><td>4 m per pixel, 67% of the grid has data. Heights from −1,780 to −1,276 m. The pit shows as an 18 m dip: stereo cannot see the shadowed floor</td></tr>
+      <tr><td>Surface photos</td><td>JPEG scans of film, 4,000–5,400 px wide</td><td>8 Apollo photos, missions 11 to 17 · 28 MB</td><td>The image links in the Apollo Lunar Surface Journal are broken, so these come from the NASA Image Library. Chang’e data needs an account: not downloaded</td></tr>
+      <tr><td>Gazetteer</td><td>Shapefile, points, 19 fields</td><td>Complete · 9,087 names · 46 MB</td><td>7,064 satellite craters, 1,615 craters, 112 rilles. Nearest name to the pit: Galilaei M, 25 km away</td></tr>
+      <tr><td>Crater database</td><td>Shapefile, points, 19 fields</td><td>Complete · 1,296,796 craters of 1 km or more · 746 MB</td><td>Median diameter 1.6 km; 83,061 craters over 5 km. 4 craters within 10 km of the pit, 30 within 50 km</td></tr>
+      <tr><td>Pit Atlas</td><td>Web table, saved as CSV with 13 columns, plus the atlas PDF</td><td>Complete · 278 pits · 145 MB</td><td>Median depth 9 m, deepest 105 m. Marius Hills pit: 55 × 49 m opening, 40 m deep. 2 pits within 100 km of it</td></tr>
+      <tr><td>Geologic map</td><td>Shapefiles and geodatabase in metres, plus raster</td><td>Complete · 12,247 polygons, 49 units · 606 MB</td><td>The pit sits in unit EIp, the Eratosthenian-Imbrian plateau unit</td></tr>
+      <tr><td>Diviner</td><td>Text table, 11 columns: position, local hour, 8 temperatures</td><td>1 band of 18, latitudes 10–20° N · 1,382,400 rows · 161 MB</td><td>Cells of 0.5°, about 15 km, in 96 time steps. At the pit: 392 K just after noon, 97 K before dawn, 105 K night average. The 240 m maps are 6.5 GB each</td></tr>
+      <tr><td>GRAIL</td><td>PDS3 <code>.img</code> + <code>.lbl</code>, 32-bit float, milligals. GeoTIFF copy</td><td>2 global maps of 35: free-air and Bouguer · 2,880 × 5,760 px · 145 MB</td><td>1.9 km per pixel. Free-air gravity from −1,330 to +1,782 mGal over the Moon, +16 mGal at the pit, Bouguer +194 mGal</td></tr>
+      <tr><td>Kaguya radar sounder</td><td>PDS3 <code>.img</code> + <code>.lbl</code>, 8-bit, each column starts with a 55-byte header</td><td>1 track, 22 Dec 2007, 34° S to 78° N · 44,636 × 1,000 px · 50 MB</td><td>The track passes 59 km east of the pit. The ODE location search does not work for this instrument: tracks must be picked by their start and stop longitude</td></tr>
+      <tr><td>Mini-RF</td><td>PDS3 <code>.img</code> + <code>.lbl</code>, 32-bit float</td><td>1 strip, two products, and the global mosaic at 32 pixels per degree · 419 MB</td><td>Strip at 14.8 m per pixel, 1,116 px wide; the pit lies at its edge. Polarisation ratio 0.47 in the strip, 0.53 over the Moon. The mosaic covers 64% of the surface</td></tr>
+      <tr><td>M³</td><td>ENVI cube + <code>.HDR</code>, 32-bit float, 85 bands from 461 to 2,976 nm</td><td>300 lines of 27,795, cut over the pit with partial downloads · 31 MB of 2.7 GB</td><td>140 m per pixel. Reflectance at the pit rises from 0.028 at 750 nm to 0.059 at 2,000 nm. The server sends any byte range, so Tav can cut a box without the full file</td></tr>
+      <tr><td>Kaguya MI</td><td>PDS3 <code>.img</code> + <code>.lbl</code>, 9 bands, 16-bit big-endian, reflectance = value × 2e-5</td><td>1 tile of 1° × 1° · 2,048 × 2,048 px · 97 MB</td><td>14.8 m per pixel, bands from 414 to 1,548 nm. Median reflectance at 749 nm: 0.047</td></tr>
+    </table></div>
+    <span class="label sub mt">Load and merge test · one grid, 1° × 1° around the pit, 15 m per pixel</span>
+    <div class="stats">
+      <div class="stat"><span class="label">Sources that load</span><b>18 of 18</b></div>
+      <div class="stat"><span class="label">Sources that merge on the map</span><b>14 of 18</b></div>
+      <div class="stat hot"><span class="label">Layers in the merged file</span><b>15</b></div>
+    </div>
+    <figure class="mt"><a href="img/tav/merged.jpg"><img src="img/tav/merged.jpg" width="1824" height="1092" loading="lazy" style="aspect-ratio:auto" alt="Fifteen layers resampled to the same grid and shown side by side, each with a pink mark on the pit. Black areas are where a layer has no data"></a>
+      <figcaption class="label">All 15 layers on the same grid · pink mark = the pit · black = no data in that layer</figcaption></figure>
+    <div class="scroll"><table>
+      <tr><th>Group</th><th>Sources</th><th>How it loads</th><th>Does it merge?</th></tr>
+      <tr><td>Map rasters · 9</td><td>WAC, Kaguya TC, LOLA, SLDEM, NAC stereo DTM, GRAIL, Mini-RF, Kaguya MI, geologic map raster</td><td>GDAL opens every file directly and reads size, projection and scale from the label. No custom code</td><td>Yes. One reprojection call per layer. Only SLDEM needed a fix: its longitudes run 0–360°</td></tr>
+      <tr><td>Rasters without a map · 2</td><td>Diviner, M³</td><td>Diviner is a text table, M³ an ENVI cube with pixel positions in a separate file</td><td>Yes, with about 15 lines of code each to place the values on a grid first</td></tr>
+      <tr><td>Vector · 3</td><td>Gazetteer, crater database, Pit Atlas (and the geologic map polygons)</td><td>Any shapefile or CSV reader</td><td>Yes, as points and outlines drawn on top. Longitudes come as 0–360°, ±180° or metres</td></tr>
+      <tr><td>Not on the map · 4</td><td>NAC raw frame, Kaguya radar sounder, Xenarch crops, surface photos</td><td>All open (PDS3, PNG, JPEG)</td><td>Not as they are. A NAC frame needs the spacecraft geometry (SPICE, ISIS) to be projected. A sounder track is a depth profile along a line. Crops and photos carry only a site position</td></tr>
+    </table></div>
+    <p class="note">The result is <code>data/tav/merged/marius_stack.tif</code>: one GeoTIFF of 2,048 × 2,048 pixels with 15 named bands, 99 MB. The layers agree with each other: the NAC stereo DTM and SLDEM differ by 0.4 m on average (3.8 m spread), the hole in the NAC DTM falls 14 m from the Pit Atlas position, and the pit shadow in Kaguya TC 33 m from it. Kaguya TC elevation sits 14 m higher than SLDEM everywhere, so it needs a constant correction.</p>
+
+    <span class="label sub mt">What does not merge · shown as points on the Moon</span>
+    <p class="note">A photo or a crop cannot become a layer, but it has a place. Each dot is one item on disk: click it to see the picture. The violet line is the radar sounder track.</p>
+    <div class="tavmap mt" id="tavmap">
+      <img src="img/tav/moon_map.jpg" width="2160" height="1080" alt="Map of the whole Moon with dots at the sites where we hold photos and crops">
+      <svg viewBox="-180 -90 360 180" preserveAspectRatio="none" aria-hidden="true"></svg>
+    </div>
+    <div class="key label"><span style="--c:var(--pink)">8 surface photos</span><span style="--c:var(--blue)">73 Xenarch crops</span><span style="--c:var(--green)">NAC raw frame</span><span style="--c:var(--violet)">Radar sounder track</span></div>
+    <div class="tavview" id="tavview" aria-live="polite">
+      <img src="img/tav/nac.jpg" alt="">
+      <div>
+        <span class="label n"></span>
+        <p class="t"></p>
+        <p class="x"></p>
+        <div class="nav"><button type="button" class="prev">← Previous</button><button type="button" class="next">Next →</button></div>
+      </div>
+    </div>
+
+    <span class="label sub mt">The two that need more work</span>
+    <figure class="wide"><a href="img/tav/nac_strip.jpg"><img src="img/tav/nac_strip.jpg" width="3264" height="316" loading="lazy" alt="The whole NAC frame as a long thin strip of cratered mare, with the pit circled near the upper edge"></a>
+      <figcaption class="label">NAC raw frame M122584310LC, whole · 25 km long, 2.4 km wide · pink circle = the pit</figcaption></figure>
+    <p class="note"><b>NAC raw frame.</b> The camera has a single row of 5,064 pixels. The spacecraft flies forward and the row is read 52,224 times: the file is those rows stacked in time order, a strip 25 km long. Nothing in the file says where a pixel is on the Moon. The label gives only the four corners, good to about 300 m. To put it on the map you need the position and pointing of the spacecraft at each instant (the SPICE files) and software that uses them (ISIS, from USGS). Until then it is the sharpest picture we hold, 0.48 m per pixel, with a dot on the map.</p>
+    <figure class="wide mt"><a href="img/tav/lrs_track.jpg"><img src="img/tav/lrs_track.jpg" width="2231" height="600" loading="lazy" alt="Radar profile: a bright horizontal line for the surface, rough at both ends and flat in the middle, with fainter echoes below"></a>
+      <figcaption class="label">Kaguya radar sounder, one track · 34° S to 78° N, 3,400 km · down = 25 km of echo delay</figcaption></figure>
+    <p class="note"><b>Radar sounder track.</b> Not a picture from above: a vertical cut through the ground. The radar sends pulses straight down as the orbiter flies north. Each column is one position along the orbit; going down a column is the time the echo took to come back, 25 m per pixel. The bright line is the surface: flat over the mare in the middle, rough over the highlands at both ends. Echoes below it can be buried lava layers, or reflections from craters to the side. It merges with the map only as a line, the violet one above, and this track passes 59 km east of the pit.</p>
+
+    <p class="note">Five different containers (PDS3, GeoTIFF, JPEG 2000, ENVI, shapefile) and three longitude conventions (0–360°, ±180°, metres). GDAL already reads all of them, so Tav does not need its own readers.</p>
   </section>
 </main>
 
 <footer>
   <div class="wrap">
-    <div class="pages"><span class="label">Pages</span><a href="index.html">Home</a><a href="mapping.html">01 · Mapping the Moon</a><a href="software.html">02 · Software</a><a href="tav.html" aria-current="page">03 · Tav ת</a><a href="detection.html">04 · Cave detection</a></div>
+    <div class="pages"><span class="label">Pages</span><a href="index.html">Home</a><a href="mapping.html">01 · Mapping the Moon</a><a href="software.html">02 · Software</a><a href="tav.html" aria-current="page">03 · Tav ת</a><a href="tav-app.html">Tav ת · map</a><a href="detection.html">04 · Cave detection</a></div>
     <span class="label made">Made by a human on Earth 🌍 — for now</span>
   </div>
 </footer>
 
 <script src="contours.js"></script>
+<script src="tav-map.js"></script>
 <script src="rover.js?v=3"></script>
 </body>
 </html>
