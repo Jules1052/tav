@@ -74,8 +74,6 @@
     if (replace) history.replaceState(null, '', url); else history.pushState(null, '', url);
     route();
   }
-  $('h-back').onclick = function () { history.back(); };
-  $('h-fwd').onclick = function () { history.forward(); };
   window.addEventListener('popstate', route);
   function show(step) {
     ['home', 'choose', 'detail'].forEach(function (s) { $(s).hidden = s !== step; });
@@ -99,13 +97,15 @@
   }
 
   // ---------------------------------------------------------------- draw
-  var mode = null, shape = null, ring = null, start = null, verts = [], ghost = null;
+  // ghost: the shape being drawn · tip: its size in km while a rectangle is dragged · dot: the first corner of a polygon
+  var mode = null, shape = null, ring = null, start = null, verts = [], ghost = null, tip = null, dot = null;
+  function clearDraft() { [ghost, tip, dot].forEach(function (l) { if (l) map.removeLayer(l); }); ghost = tip = dot = null; }
   function setMode(m) {
     mode = m; $('draw-rect').classList.toggle('on', m === 'rect'); $('draw-poly').classList.toggle('on', m === 'poly');
     map.getContainer().classList.toggle('drawing', !!m);
     if (m) { map.dragging.disable(); map.doubleClickZoom.disable(); } else { map.dragging.enable(); map.doubleClickZoom.enable(); }
-    $('hint').textContent = m === 'rect' ? 'Now press, drag and release on the map.' : m === 'poly' ? 'Click each corner on the map. Double-click to close the shape.' : 'Press the button, then press, drag and release on the map.';
-    verts = []; start = null; if (ghost) { map.removeLayer(ghost); ghost = null; }
+    $('hint').textContent = m === 'rect' ? 'Now press, drag and release on the map.' : m === 'poly' ? 'Click each corner on the map. Click the first corner again (or double-click) to close the shape: the download starts at once.' : 'Press the button, then press, drag and release on the map.';
+    verts = []; start = null; clearDraft();
   }
   function clearShape() { if (shape) map.removeLayer(shape); shape = null; ring = null; }
   function finish(kind, pts) {
@@ -115,28 +115,53 @@
   $('draw-poly').onclick = function () { setMode(mode === 'poly' ? null : 'poly'); };
   $('redraw').onclick = function () { nav(''); setMode('rect'); };
   map.on('mousedown', function (e) { if (mode === 'rect') { start = e.latlng; } });
+  // a click within 12 px of the first corner closes the polygon
+  function nearStart(ll) { return verts.length >= 3 && map.latLngToContainerPoint(ll).distanceTo(map.latLngToContainerPoint(verts[0])) < 12; }
   map.on('mousemove', function (e) {
     if (mode === 'rect' && start) {
-      if (ghost) map.removeLayer(ghost);
-      ghost = L.rectangle([start, e.latlng], { color: RED, weight: 2, fillOpacity: 0.08, interactive: false }).addTo(map);
+      var bb = L.latLngBounds(start, e.latlng), mid = (start.lat + e.latlng.lat) / 2;
+      var w = Math.abs(e.latlng.lng - start.lng) * KM * Math.cos(mid * Math.PI / 180), h = Math.abs(e.latlng.lat - start.lat) * KM;
+      var txt = '≈ ' + fmtKm(w) + ' km × ' + fmtKm(h) + ' km<small>' + num(w * h) + ' km²</small>';
+      if (ghost) ghost.setBounds(bb); else ghost = L.rectangle(bb, { color: RED, weight: 2, fillOpacity: 0.08, interactive: false }).addTo(map);
+      if (tip) tip.setLatLng(e.latlng).setContent(txt);
+      else tip = L.tooltip({ direction: 'right', offset: [16, 0], className: 'km' }).setLatLng(e.latlng).setContent(txt).addTo(map);
     } else if (mode === 'poly' && verts.length) {
+      var snap = nearStart(e.latlng);
       if (ghost) map.removeLayer(ghost);
-      ghost = L.polyline(verts.concat([e.latlng]), { color: RED, weight: 2, interactive: false }).addTo(map);
+      ghost = L.polyline(verts.concat([snap ? verts[0] : e.latlng]), { color: RED, weight: 2, interactive: false }).addTo(map);
+      if (dot) dot.setRadius(snap ? 9 : 6);
     }
   });
   map.on('mouseup', function (e) {
     if (mode !== 'rect' || !start) return;
     var a = start, b = e.latlng; start = null;
-    if (Math.abs(a.lat - b.lat) < 1e-4 || Math.abs(a.lng - b.lng) < 1e-4) return;
+    if (Math.abs(a.lat - b.lat) < 1e-4 || Math.abs(a.lng - b.lng) < 1e-4) { clearDraft(); return; }
     var n = Math.max(a.lat, b.lat), s = Math.min(a.lat, b.lat), w = Math.min(a.lng, b.lng), ea = Math.max(a.lng, b.lng);
     finish('rectangle', [L.latLng(n, w), L.latLng(n, ea), L.latLng(s, ea), L.latLng(s, w)]);
   });
-  map.on('click', function (e) { if (mode === 'poly') verts.push(e.latlng); });
-  map.on('dblclick', function () {
+  map.on('click', function (e) {
     if (mode !== 'poly') return;
-    var v = verts.filter(function (p, i) { return i === 0 || !p.equals(verts[i - 1]); });
-    if (v.length >= 3) finish('polygon', v);
+    if (nearStart(e.latlng)) { closePoly(); return; }
+    verts.push(e.latlng);
+    if (verts.length === 1) dot = L.circleMarker(e.latlng, { radius: 6, color: RED, weight: 2, fillColor: '#fff', fillOpacity: 1, interactive: false }).addTo(map);
   });
+  map.on('dblclick', function () { if (mode === 'poly') closePoly(); });
+  function closePoly() {
+    var v = verts.filter(function (p, i) { return i === 0 || !p.equals(verts[i - 1]); });
+    if (v.length < 3) return;
+    setMode(null); capturePolygon(v);
+  }
+  // a closed polygon skips step 2: it downloads at once, with the layers step 2 would have ticked
+  var DEFAULT_LAYERS = ['imagery', 'thermal_night', 'gravity', 'radar_cpr', 'vectors', 'catalogue', 'points_nac', 'points_radar', 'points_xenarch'];
+  function capturePolygon(v) {
+    var pts = v.map(function (p) { return [+p.lat.toFixed(5), +p.lng.toFixed(5)]; });
+    var layers = DEFAULT_LAYERS.filter(function (k) { return !opts.off[k]; });
+    clearShape(); shape = L.polygon(pts, { color: RED, weight: 2, fillColor: RED, fillOpacity: 0.08, interactive: false }).addTo(map);
+    $('hint').textContent = 'Starting the download…';
+    api('/api/captures', { ring: pts, shape: 'polygon', options: { layers: layers.length ? layers : ['none'], max_px: opts.max_px, tc_download: false } })
+      .then(function (r) { nav(r.id); })
+      .catch(function (e) { clearShape(); setMode(null); alert('Download failed: ' + e.message); });
+  }
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && mode) setMode(null); });
 
   // ----------------------------------------------- step 2 · choose
