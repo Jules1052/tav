@@ -20,7 +20,7 @@ Tav gives satellite imagery, terrain data, caves, minerals and on-site pictures 
 - Draw a rectangle or polygon on the map of the Moon and Tav downloads **everything** inside it: imagery, elevation, a textured 3D mesh, night temperature, gravity, radar, craters, names, pits and geology.
 - It also lists every archive product that crosses the box (high-resolution frames, mineral maps, stereo elevation models) and downloads the ones you ask for.
 
-Aleph is the first letter of the Hebrew alphabet and Tav is the last. Like Aleph, Tav has no AI inside: it only collects data, so that a language model can look at a place.
+Aleph is the first letter of the Hebrew alphabet and Tav is the last. From Earth to space, we've got you covered. Like Aleph, Tav has no AI inside: it only collects data, so that a language model can look at a place.
 
 <p align="center">
   <img src="resources/show.png" alt="Capture: a box on the Moon becomes a folder of imagery, elevation, temperature, gravity, radar, caves, minerals and points. API: plan, start and read a capture over HTTP." width="800">

@@ -13,6 +13,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'resources', 'demo.webp')
 URL = os.environ.get('TAV', 'http://127.0.0.1:8060') + '/tav-app.html'
 W, H, SCALE = 1440, 900, 1200 / 1440
+SPEED = 2   # playback speed of the finished video
 frames = []   # (PIL image, milliseconds)
 
 CURSOR = """
@@ -114,7 +115,7 @@ def main():
         br.close()
 
     imgs = [f.resize((int(W * SCALE), int(H * SCALE)), Image.LANCZOS) for f, _ in frames]
-    imgs[0].save(OUT, save_all=True, append_images=imgs[1:], duration=[d for _, d in frames], loop=0, quality=72, method=4)
+    imgs[0].save(OUT, save_all=True, append_images=imgs[1:], duration=[max(20, d // SPEED) for _, d in frames], loop=0, quality=72, method=4)
     print(f'{OUT}: {len(frames)} frames, {sum(d for _, d in frames) / 1000:.1f} s, {os.path.getsize(OUT) / 1e6:.1f} MB')
 
 
