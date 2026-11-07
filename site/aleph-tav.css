@@ -1,0 +1,153 @@
+/* Aleph · Tav (aleph-tav.html): one cream sheet.
+ * Everything sits on a design frame of 1440 × 860 (420 × 900 on a tall screen) that is scaled to fit the window:
+ * --u is one design pixel, so the page fills any screen without scrolling.
+ * The background (cream and the Earth–Moon gravity lines) is drawn by aleph-tav.js on the .field canvas.
+ */
+
+/* 1 · Tokens and sheet ------------------------------------------------------- */
+:root { --cream: #f8f1e5; --cream-2: #ece2cf; --ink-a: #24211e; --ink-a2: #4d463d; --line-a: #34302b; --red: #ff4938; --navy: #1f1513;
+  --globe-land: #e1dacf; --globe-sea: #cfc5b5; }    /* the paper maps on the globes: a shade darker than the sheet */
+html:has(body.duo) { height: 100%; overflow: hidden; color-scheme: light; }
+body.duo { height: 100%; overflow: hidden; color: var(--ink-a);
+  background: var(--cream); }
+body.duo::before { display: none; }                 /* style.css draws its own lines on every page; here .field draws them */
+.field { position: fixed; inset: 0; z-index: -2; display: block; width: 100%; height: 100%; }
+.defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* The river of each banner, along the window's edges: red for Aleph, violet for Tav */
+.rivers { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+.river { position: absolute; top: 0; width: 40px; height: 100%; overflow: visible; filter: url(#rough); }
+.river.a { left: -4px; }
+.river.t { right: -4px; }
+.river path { fill: none; stroke-width: 8; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.river.a path { stroke: var(--red); }
+.river.t path { stroke: var(--violet); filter: drop-shadow(0 0 8px color-mix(in srgb, var(--violet) 70%, transparent)); }
+
+/* 2 · Frame ------------------------------------------------------------------ */
+.frame { --W: 1440; --H: 860; --u: min(calc(100vw / var(--W)), calc(100vh / var(--H)));
+  position: fixed; left: 50%; top: 50%; width: calc(var(--W) * var(--u)); height: calc(var(--H) * var(--u)); transform: translate(-50%, -50%); }
+@supports (height: 100dvh) { .frame { --u: min(calc(100vw / var(--W)), calc(100dvh / var(--H))); } }
+.frame > * { position: absolute; margin: 0; }
+
+/* 3 · The two letters at the top, the settings at the bottom centre ------------- */
+.mark { top: calc(12 * var(--u)); font: 600 calc(58 * var(--u))/1 "Arial Hebrew", "SF Hebrew", "Noto Sans Hebrew", Arial, sans-serif; text-decoration: none; }
+.mark.al { left: calc(34 * var(--u)); color: var(--red); }
+.mark.tv { right: calc(34 * var(--u)); color: var(--violet); text-shadow: 0 0 calc(18 * var(--u)) color-mix(in srgb, var(--violet) 70%, transparent); }
+.mark span { display: block; padding: calc(6 * var(--u)) calc(8 * var(--u)); transition: transform .3s cubic-bezier(.3, .7, .2, 1); }
+.mark:hover span, .mark:focus-visible span { transform: scale(1.12) rotate(-4deg); }
+.mark:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; border-radius: 8px; }
+
+.settings { left: 50%; bottom: calc(20 * var(--u)); transform: translateX(-50%); width: max-content; max-width: calc(var(--W) * var(--u)); }
+.looks { display: flex; flex-wrap: wrap; justify-content: center; gap: calc(6 * var(--u)); }
+.looks button { font: 500 max(12px, calc(15 * var(--u)))/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a2);
+  background: color-mix(in srgb, var(--cream) 80%, transparent); border: 1.5px solid rgba(52, 48, 43, .38); border-radius: 999px;
+  padding: calc(9 * var(--u)) calc(15 * var(--u)); cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
+.looks button:hover { border-color: var(--red); color: var(--ink-a); }
+.looks button[aria-pressed="true"] { color: var(--cream); background: var(--ink-a); border-color: var(--ink-a); }
+.looks button:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+
+/* 4 · Claim ------------------------------------------------------------------ */
+.claim { top: calc(92 * var(--u)); left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(var(--W) * var(--u)); text-align: center; }
+.claim > * { margin: 0; }
+.claim h1 { font: 500 calc(60 * var(--u))/1.1 var(--font); letter-spacing: -.015em; color: var(--ink-a); }
+.claim .for { margin-top: calc(4 * var(--u)); font: 400 calc(28 * var(--u))/1.4 var(--font); color: var(--ink-a2); }
+.claim em { font-style: italic; }
+.claim .span { margin-top: calc(14 * var(--u)); font: 500 calc(25 * var(--u))/1.35 var(--font); color: var(--ink-a); }
+/* One line: From Earth א to space ת, then the lighter “we’ve got you covered” (each half kept whole if a narrow screen wraps it) */
+.claim .way, .claim .cov { white-space: nowrap; }
+.claim .cov { font-weight: 400; color: var(--ink-a2); }
+.he { font: 600 1.3em/1 "Arial Hebrew", "SF Hebrew", "Noto Sans Hebrew", Arial, sans-serif; }
+.claim .he { display: inline-block; margin: 0 .12em; vertical-align: -.06em; }
+.al { color: var(--red); }
+.tv { color: var(--violet); text-shadow: 0 0 .5em color-mix(in srgb, var(--violet) 70%, transparent); }
+
+/* 5 · Globes: the Earth up on the left, the Moon down on the right ------------- */
+.world { --x: 80; --y: 222; --s: 500; left: calc(var(--x) * var(--u)); top: calc(var(--y) * var(--u)); width: calc(var(--s) * var(--u));
+  padding: 0; border: 0; background: none; }
+.world.moon { --x: 1055; --y: 440; --s: 195; }
+.world .stage { position: relative; isolation: isolate; width: 100%; aspect-ratio: 1; border-radius: 50%;
+  cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; outline: none; }
+.world .stage.dragging { cursor: grabbing; }
+.world canvas { display: block; width: 100%; height: 100%; }
+/* Both globes lie on the paper: a soft shadow under each. Pointing at the Moon lights a violet halo round it. */
+.world .stage::before { content: ""; position: absolute; z-index: -1; inset: 9% 1% -3% 7%; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(52, 48, 43, .3), rgba(52, 48, 43, .1) 70%, transparent); filter: blur(8px); }
+.moon .stage::before { filter: blur(5px); }
+.moon.hot .stage::before, .pair-tav .moon .stage::before { inset: -14%; filter: none;
+  background: radial-gradient(circle closest-side, transparent 66%, color-mix(in srgb, var(--violet) 85%, transparent) 70%, color-mix(in srgb, var(--violet) 35%, transparent) 83%, transparent 100%); }
+/* Pointing at a globe draws a ring round it, by hand */
+.ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; filter: url(#rough); opacity: 0; transition: opacity .3s; }
+.ring circle { fill: none; stroke-width: 1.1; stroke-dasharray: 100; stroke-dashoffset: 100; stroke-linecap: butt; transition: stroke-dashoffset .6s cubic-bezier(.3, .7, .2, 1); }
+.earth .ring circle { stroke: var(--red); }
+.moon .ring circle { stroke: var(--violet); stroke-width: 2.2; }
+.moon .ring { filter: url(#rough) drop-shadow(0 0 5px var(--violet)); }
+.world.hot .ring, .world .stage:focus-visible .ring, .pair-aleph .earth .ring, .pair-tav .moon .ring { opacity: 1; }
+.world.hot .ring circle, .world .stage:focus-visible .ring circle, .pair-aleph .earth .ring circle, .pair-tav .moon .ring circle { stroke-dashoffset: 0; }
+/* No WebGL: a flat picture of each body */
+.world.nogl canvas { visibility: hidden; }
+.world.nogl .stage { background: url(img/earth-color.jpg) center / auto 100%; }
+.world.moon.nogl .stage { background-image: url(img/moon-color.jpg); }
+
+/* 6 · Hint and cards, between the two globes ------------------------------------ */
+.hint { left: calc(430 * var(--u)); top: calc(400 * var(--u)); width: calc(700 * var(--u)); text-align: center;
+  font: 400 max(15px, calc(21 * var(--u)))/1.4 var(--font); color: var(--ink-a2); transition: opacity .3s; }
+.hint .finger { display: none; }
+@media (hover: none) { .hint .finger { display: inline; } .hint .mouse { display: none; } }
+.pair-aleph .hint, .pair-tav .hint { opacity: 0; }
+
+.card { left: calc(572 * var(--u)); top: calc(318 * var(--u)); width: calc(470 * var(--u)); z-index: 2;
+  padding: calc(16 * var(--u)) calc(20 * var(--u)) calc(22 * var(--u)); border-radius: calc(26 * var(--u));
+  opacity: 0; visibility: hidden; transition: opacity .3s ease, transform .5s cubic-bezier(.2, .8, .2, 1), visibility 0s linear .5s; }
+/* Aleph comes from the Earth (up left), Tav from the Moon (down right) */
+.card.aleph { transform: translate(calc(-40 * var(--u)), calc(-28 * var(--u))) rotate(-1.5deg);
+  background: var(--cream); color: var(--ink-a); border: 2px solid var(--line-a); box-shadow: 0 calc(24 * var(--u)) calc(60 * var(--u)) rgba(36, 33, 30, .28); }
+.card.tav { transform: translate(calc(40 * var(--u)), calc(28 * var(--u))) rotate(1.5deg);
+  background: var(--navy); color: var(--ink); border: 1px solid rgba(255, 255, 255, .28);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--violet) 30%, transparent), 0 0 calc(70 * var(--u)) color-mix(in srgb, var(--violet) 55%, transparent); }
+.pair-aleph .card.aleph, .pair-tav .card.tav { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+.card .banner { margin: 0; line-height: 0; }
+.card .banner img { display: block; width: 100%; max-width: calc(400 * var(--u)); height: auto; }
+.card .label { display: flex; align-items: center; gap: calc(10 * var(--u)); margin: calc(14 * var(--u)) calc(4 * var(--u)) calc(6 * var(--u));
+  font-size: max(12px, calc(15.5 * var(--u))); }
+.card .label .he { font-size: calc(28 * var(--u)); letter-spacing: 0; }
+.card.aleph .label { color: var(--red); }
+.card.tav .label { color: var(--violet); }
+.card.tav .label .he { text-shadow: 0 0 14px color-mix(in srgb, var(--violet) 80%, transparent); }
+.card .txt { margin: 0 calc(4 * var(--u)); font: 400 max(15px, calc(20.5 * var(--u)))/1.55 var(--font); }
+.card.aleph .txt { color: #3d372f; }
+.card.tav .txt { color: var(--ink-2); }
+.card .go { display: flex; flex-wrap: wrap; gap: calc(10 * var(--u)); margin: calc(18 * var(--u)) calc(4 * var(--u)) 0; }
+.card .go a { font: 500 max(12px, calc(15.5 * var(--u)))/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; text-decoration: none;
+  padding: calc(12 * var(--u)) calc(17 * var(--u)); border-radius: 999px; border: 1.5px solid; transition: background .2s, color .2s, box-shadow .2s, border-color .2s; }
+.card.aleph .go a { color: var(--cream); background: var(--ink-a); border-color: var(--ink-a); }
+.card.aleph .go a:hover, .card.aleph .go a:focus-visible { background: var(--red); border-color: var(--red); color: #fff; outline: none; }
+.card.tav .go a { color: var(--ink); border-color: rgba(255, 255, 255, .4); }
+.card.tav .go a.main { color: #000; background: var(--violet); border-color: var(--violet); }
+.card.tav .go a:hover, .card.tav .go a:focus-visible { border-color: var(--violet); outline: none; box-shadow: 0 0 20px color-mix(in srgb, var(--violet) 70%, transparent); }
+
+/* 7 · Signature ------------------------------------------------------------------ */
+.made { left: calc(34 * var(--u)); bottom: calc(28 * var(--u)); font: 500 max(11px, calc(14 * var(--u)))/1.4 var(--mono); letter-spacing: .06em; color: #6b6257; }
+
+/* 8 · Tall screens (phones): a 420 × 900 frame, the card rises from the bottom ------ */
+@media (max-aspect-ratio: 1/1) {
+  .frame { --W: 420; --H: 900; }
+  .mark { top: calc(8 * var(--u)); font-size: calc(46 * var(--u)); }
+  .mark.al { left: calc(12 * var(--u)); }
+  .mark.tv { right: calc(12 * var(--u)); }
+  .rivers { display: none; }                         /* too close to the content on a narrow screen */
+  .settings { left: calc(4 * var(--u)); right: calc(4 * var(--u)); bottom: calc(42 * var(--u)); width: auto; transform: none; }
+  .looks button { font-size: max(12px, calc(14 * var(--u))); padding: calc(9 * var(--u)) calc(9 * var(--u)); }
+  .claim { top: calc(96 * var(--u)); width: calc(400 * var(--u)); }
+  .claim h1 { font-size: calc(34 * var(--u)); }
+  .claim .for { font-size: calc(19 * var(--u)); }
+  .claim .span { font-size: calc(17 * var(--u)); margin-top: calc(8 * var(--u)); }
+  .world { --x: 25; --y: 305; --s: 330; }
+  .world.moon { --x: 262; --y: 612; --s: 130; }
+  .hint { left: 0; width: calc(420 * var(--u)); top: calc(270 * var(--u)); font-size: max(14px, calc(17 * var(--u))); }
+  .card { left: calc(10 * var(--u)); width: calc(400 * var(--u)); top: auto; bottom: calc(10 * var(--u)); }
+  .card .banner img { max-width: calc(330 * var(--u)); }
+  .made { left: calc(18 * var(--u)); bottom: calc(12 * var(--u)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card, .ring, .ring circle, .hint, .mark span { transition: none; }
+}
