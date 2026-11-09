@@ -60,9 +60,8 @@
   L.imageOverlay('img/tav/moon_map.jpg', [[-90, -180], [90, 180]], { pane: 'base' }).addTo(map);
   L.tileLayer('https://trek.nasa.gov/tiles/Moon/EQ/LRO_WAC_Mosaic_Global_303ppd_v02/1.0.0/default/default028mm/{z}/{y}/{x}.jpg',
     { maxNativeZoom: 8, maxZoom: 13, noWrap: true, bounds: [[-90, -180], [90, 180]], attribution: 'LROC WAC mosaic · NASA Moon Trek' }).addTo(map);
-  function fitOpts(maxZoom) {   // keep the box clear of the panel
-    var s = $('side').getBoundingClientRect(), wide = window.innerWidth > 980;
-    var o = { paddingTopLeft: [wide ? s.right + 50 : 40, 90], paddingBottomRight: [70, wide ? 70 : window.innerHeight - s.top + 30] };
+  function fitOpts(maxZoom) {   // the map ends at the panel: keep the box clear of the search bar, zoom buttons and coordinates
+    var o = { paddingTopLeft: [40, 80], paddingBottomRight: [70, 50] };
     if (maxZoom) o.maxZoom = maxZoom; return o;
   }
   map.on('mousemove', function (e) {
@@ -459,7 +458,7 @@
     hide3d(); $('three').hidden = false;
     var box = $('t-canvas'), m = cur;
     var renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); renderer.outputEncoding = THREE.sRGBEncoding; box.appendChild(renderer.domElement);
-    var scene = new THREE.Scene(); scene.background = new THREE.Color(0x05060b);
+    var scene = new THREE.Scene(); scene.background = new THREE.Color(0x141412);
     var size = Math.max(m.mesh.width_m, m.mesh.height_m), cam = new THREE.PerspectiveCamera(38, 1, size / 1000, size * 30);
     var ctl = new THREE.OrbitControls(cam, renderer.domElement); ctl.maxPolarAngle = Math.PI / 2; ctl.enableDamping = true;
     var home = function () { cam.position.set(0, size * 1.05, size * 1.7); ctl.target.set(0, 0, 0); ctl.update(); };   // the mesh sits at the origin: always start centred
