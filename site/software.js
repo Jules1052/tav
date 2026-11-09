@@ -350,7 +350,6 @@
   scenes.forEach(fit);
   const repaintStill = () => scenes.forEach(s => paint(s, s.endT));
   addEventListener('resize', () => { scenes.forEach(fit); if (still) repaintStill(); });
-  new MutationObserver(() => { readColors(); if (still) repaintStill(); }).observe(root, { attributes: true, attributeFilter: ['data-theme', 'data-palette'] });
   if (still) return repaintStill();
   if ('IntersectionObserver' in window) {          // only animate what is on screen
     const io = new IntersectionObserver(es => es.forEach(e => { scenes.find(s => s.cv === e.target).on = e.isIntersecting; }));

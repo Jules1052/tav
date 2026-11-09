@@ -50,7 +50,6 @@
     var r = el(o.label === false ? 'div' : 'label', { class: 'row' + (o.off ? ' off' : '') }, [ic, el('span', { class: 'tx' }, [title, el('small', { text: sub })]), right || el('span')]);
     return el('li', {}, [r]);
   }
-  var store = { get: function (k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }, set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 
   // ---------------------------------------------------------------- map
   var map = L.map('map', { crs: L.CRS.EPSG4326, center: [14.09, -56.77], zoom: 3, minZoom: 1, maxZoom: 13, zoomControl: false,
@@ -498,7 +497,7 @@
   $('caplist').addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.classList.contains('cap')) e.target.click(); });
   // a Tav server answers /api/status; without one (a static host, or Cloudflare) this page is the web version
   fetch('/api/status').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }).then(function (s) {
-    WEB = !(s && s.ok && !s.web) && !!window.TavWeb;
+    WEB = !(s && s.ok) && !!window.TavWeb;
     if (WEB) {
       $('webnote').hidden = false; $('copy-path').textContent = 'Save as .zip';
       document.querySelector('#detail details.files .eyebrow').textContent = 'Files in this browser';

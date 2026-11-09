@@ -7,7 +7,7 @@ captures/<id>/, with manifest.json as the file to read first.
 
 Needs: python3, numpy, pillow, curl. No AI inside: it only collects data.
 """
-import bisect, csv, io, json, math, os, re, struct, subprocess, sys, threading, time, traceback, urllib.parse
+import bisect, io, json, math, os, re, struct, subprocess, threading, time, traceback, urllib.parse
 from concurrent.futures import ThreadPoolExecutor
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
@@ -28,12 +28,20 @@ w180 = lambda lon: ((float(lon) + 180) % 360) - 180
 
 
 # ---------------------------------------------------------------- http (curl)
-def curl(url, rng=None, timeout=180, headers=()):
-    cmd = ['curl', '-fsSL', '--retry', '2', '-m', str(timeout), '-A', 'tav/0.1']
+def run_curl(url, *args, timeout, retry=2, headers=()):
+    """curl that fails on HTTP errors, follows redirects and retries; returns the finished process."""
+    cmd = ['curl', '-fsSL', '--retry', str(retry), '-m', str(timeout), '-A', 'tav/0.1', *args]
     for h in headers: cmd += ['-H', h]
-    if rng: cmd += ['-r', f'{rng[0]}-{rng[1] - 1}']
-    r = subprocess.run(cmd + [url], capture_output=True)
-    if r.returncode != 0: raise IOError(f'{url}: {r.stderr.decode(errors="replace").strip()[:160]}')
+    return subprocess.run(cmd + [url], capture_output=True)
+
+
+def curl_error(url, r):
+    return IOError(f'{url}: {r.stderr.decode(errors="replace").strip()[:160]}')
+
+
+def curl(url, rng=None, timeout=180, headers=()):
+    r = run_curl(url, *(['-r', f'{rng[0]}-{rng[1] - 1}'] if rng else []), timeout=timeout, headers=headers)
+    if r.returncode != 0: raise curl_error(url, r)
     if rng and len(r.stdout) != rng[1] - rng[0]: raise IOError(f'{url}: server ignored the byte range')
     return r.stdout
 
@@ -45,11 +53,10 @@ def curl_ranges(url, spans, timeout=600):
     """Fetch byte ranges [a, b) of one file in a single request (multipart/byteranges); one bytes object per range."""
     if len(spans) == 1: return [curl(url, spans[0], timeout)]
     want = sum(b - a for a, b in spans)   # a server that ignores the ranges would send the whole file: stop it early
-    cmd = ['curl', '-fsSL', '--retry', '2', '-m', str(timeout), '-A', 'tav/0.1', '-D', '-', '--max-filesize', str(want + 300 * len(spans) + 65536),
-           '-H', 'Range: bytes=' + ','.join(f'{a}-{b - 1}' for a, b in spans), url]
-    r = subprocess.run(cmd, capture_output=True)
+    r = run_curl(url, '-D', '-', '--max-filesize', str(want + 300 * len(spans) + 65536), timeout=timeout,
+                 headers=('Range: bytes=' + ','.join(f'{a}-{b - 1}' for a, b in spans),))
     if r.returncode == 63 or b'Maximum file size exceeded' in r.stderr: raise RangesIgnored(f'{url}: server ignored the byte ranges')   # 56 over HTTP/2
-    if r.returncode != 0: raise IOError(f'{url}: {r.stderr.decode(errors="replace").strip()[:160]}')
+    if r.returncode != 0: raise curl_error(url, r)
     out, head = r.stdout, ''
     while out.startswith(b'HTTP/'):   # one header block per redirect or retry, then the body
         i = out.find(b'\r\n\r\n')
@@ -97,10 +104,8 @@ def curl_spans(url, spans, max_ranges=400, max_bytes=32 << 20):
 
 def curl_to(url, path, headers=(), timeout=3600):
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    cmd = ['curl', '-fsSL', '--retry', '3', '-m', str(timeout), '-A', 'tav/0.1', '-o', path + '.part']
-    for h in headers: cmd += ['-H', h]
-    r = subprocess.run(cmd + [url], capture_output=True)
-    if r.returncode != 0: raise IOError(f'{url}: {r.stderr.decode(errors="replace").strip()[:160]}')
+    r = run_curl(url, '-o', path + '.part', timeout=timeout, retry=3, headers=headers)
+    if r.returncode != 0: raise curl_error(url, r)
     os.replace(path + '.part', path); return path
 
 
@@ -192,6 +197,12 @@ RASTERS = [
            valid=lambda a: (a > 0) & (a < 50), source='Mini-RF global mosaic, circular polarisation ratio, 237 m per pixel'),
 ]
 
+
+def elevation_raster(s, n):
+    """SLDEM2015 between 60° S and 60° N, LOLA beyond."""
+    return RASTERS[0] if (n <= 60 and s >= -60) else RASTERS[1]
+
+
 ODE_TYPES = [  # (ihid, iid, pt, title)
     ('LRO', 'LROC', 'CDRNAC4', 'LROC NAC frames'), ('LRO', 'LROC', 'SDNDTM', 'NAC stereo DTMs'),
     ('SLN', 'TC', 'TCORT', 'Kaguya TC ortho tiles'), ('SLN', 'TC', 'TCDTMM', 'Kaguya TC elevation tiles'),
@@ -261,6 +272,16 @@ def polygon_mask(ring, d, w, h):
         xs = sorted(x1 + (yc - y1) * (x2 - x1) / (y2 - y1) for (x1, y1), (x2, y2) in zip(pts, pts[1:] + pts[:1]) if (y1 > yc) != (y2 > yc))
         for a, b in zip(xs[0::2], xs[1::2]): m[y, max(0, math.ceil(a - 0.5)):max(0, min(w, math.ceil(b - 0.5)))] = True
     return m
+
+
+def track_crossing(t, s, n, w, e):
+    """Where a radar sounder track (lrs_tracks.json) crosses a box: (lat, lon) at the box's middle latitude, or at the
+    end of the track nearest to it; None if the track misses the box. The track is a straight line in lat and lon."""
+    a, b = min(t['lat0'], t['lat1']), max(t['lat0'], t['lat1'])
+    if b < s or a > n or t['lat1'] == t['lat0']: return None
+    lat = min(max((s + n) / 2, a), b); dl = ((t['lon1'] - t['lon0'] + 180) % 360) - 180
+    lon = w180(t['lon0'] + dl * (lat - t['lat0']) / (t['lat1'] - t['lat0']))
+    return (lat, lon) if w <= lon <= e else None
 
 
 def in_ring(lat, lon, ring):
@@ -402,7 +423,7 @@ class Capture:
         return d, a
 
     def elevation(self):
-        r = RASTERS[0] if (self.n <= 60 and self.s >= -60) else RASTERS[1]
+        r = elevation_raster(self.s, self.n)
         try: got = self.raster(r)
         except Exception as ex:
             if r is RASTERS[1]: raise
@@ -511,7 +532,7 @@ class Capture:
             self.m['mesh'] = dict(file='mesh.glb', vertices=int(h.size), relief_m=round(float(np.nanmax(h) - np.nanmin(h)), 1), width_m=wk * 1000, height_m=hk * 1000, source='Kaguya TC elevation and image')
 
     def points(self):
-        pts = []; mid = (self.s + self.n) / 2; clamp = lambda v, a, b: min(max(v, a), b)
+        pts = []; clamp = lambda v, a, b: min(max(v, a), b)
         for it in (products(self.dir, 'CDRNAC4') or []) if 'points_nac' in self.want else []:
             if it['lat'] is None: continue
             sun = f", sun {it['incidence']:.0f}° from vertical" + (' (night)' if it['incidence'] > 90 else '') if it['incidence'] is not None else ''
@@ -525,11 +546,9 @@ class Capture:
             pts.append(dict(kind='nac', lat=la, lon=lo, title=f"NAC frame {it['id'].split('.')[-1].upper()}",
                             text=f"{(it['time'] or '')[:10]}, {it['m_px']} m per pixel{sun}. Raw strip, {it['bytes'] / 1e6:.0f} MB.", ref=it['id'], incidence=it['incidence']))
         for t in (index('lrs_tracks.json') or []) if 'points_radar' in self.want else []:
-            a, b = min(t['lat0'], t['lat1']), max(t['lat0'], t['lat1'])
-            if b < self.s or a > self.n or t['lat1'] == t['lat0']: continue
-            dl = ((t['lon1'] - t['lon0'] + 180) % 360) - 180; lon = w180(t['lon0'] + dl * (clamp(mid, a, b) - t['lat0']) / (t['lat1'] - t['lat0']))
-            if self.w <= lon <= self.e:
-                pts.append(dict(kind='radar', lat=clamp(mid, a, b), lon=lon, title=f"Radar sounder track {t['id'][-14:]}",
+            x = track_crossing(t, self.s, self.n, self.w, self.e)
+            if x:
+                pts.append(dict(kind='radar', lat=x[0], lon=x[1], title=f"Radar sounder track {t['id'][-14:]}",
                                 text=f"Kaguya LRS, {t['day'][:4]}-{t['day'][4:6]}-{t['day'][6:]}. A vertical cut through the ground along the orbit, 25 m per pixel in depth.", ref=t['id'], day=t['day'], track=t))
         for p in (index('xenarch.json') or []) if 'points_xenarch' in self.want else []:
             if self.s <= p['lat'] <= self.n and self.w <= p['lon'] <= self.e and in_ring([p['lat']], [p['lon']], self.ring)[0]: pts.append(dict(p))
@@ -561,7 +580,7 @@ def plan(ring):
     s, n, w, e = min(la), max(la), min(lo), max(lo); mid = (s + n) / 2
     inside = lambda pts: sum(1 for p in pts if s <= p['lat'] <= n and w <= p['lon'] <= e and in_ring([p['lat']], [p['lon']], ring)[0])
     out = dict(size_km=[round((e - w) * KM_DEG * math.cos(math.radians(mid)), 2), round((n - s) * KM_DEG, 2)], layers={})
-    for key, r in (('elevation', RASTERS[0] if (n <= 60 and s >= -60) else RASTERS[1]), ('thermal_night', RASTERS[2]), ('gravity', RASTERS[3]), ('radar_cpr', RASTERS[4])):
+    for key, r in (('elevation', elevation_raster(s, n)), ('thermal_night', RASTERS[2]), ('gravity', RASTERS[3]), ('radar_cpr', RASTERS[4])):
         ok = min(n, r.lat_top) > max(s, r.lat_bot)
         out['layers'][key] = dict(title=r.title, m_px=round(KM_DEG * 1000 / r.ppd, 1), px=[int((e - w) * r.ppd) + 1, int((n - s) * r.ppd) + 1], available=ok, source=r.source)
     out['layers']['imagery'] = dict(title='Imagery · LROC WAC', m_px=83, px=[int((e - w) * 364) + 1, int((n - s) * 364) + 1], available=True, source='LROC WAC global mosaic, NASA Moon Trek')
@@ -572,15 +591,10 @@ def plan(ring):
         f = f'_MAP_02_{ns(top)}E{west % 360:03d}{ns(top - 3)}E{(west + 3) % 360 if (west + 3) % 360 else 360:03d}SC.img'
         have += all(any(os.path.exists(os.path.join(d, pre + f)) for d in (os.path.join(DATA, 'kaguya-tc'), os.path.join(CACHE, 'tc'))) for pre in ('TCO', 'DTM'))
     out['kaguya'] = dict(tiles=len(tiles), on_disk=have, download_mb=(len(tiles) - have) * 604)
-    c = craters_in(s, n, w, e)
-    xen =[p for p in (index('xenarch.json') or [])]; radar = 0
-    for t in index('lrs_tracks.json') or []:
-        a, b = min(t['lat0'], t['lat1']), max(t['lat0'], t['lat1'])
-        if b < s or a > n or t['lat1'] == t['lat0']: continue
-        dl = ((t['lon1'] - t['lon0'] + 180) % 360) - 180; lon = w180(t['lon0'] + dl * (min(max(mid, a), b) - t['lat0']) / (t['lat1'] - t['lat0']))
-        radar += w <= lon <= e
+    c, xen = craters_in(s, n, w, e), index('xenarch.json') or []
+    radar = sum(1 for t in index('lrs_tracks.json') or [] if track_crossing(t, s, n, w, e))
     out['counts'] = dict(craters=len(c) if c is not None else None, names=sum(1 for x in (index('names.json') or []) if s <= x[2] <= n and w <= x[3] <= e),
-                         pits=inside(index('pits.json') or []), radar=int(radar), ohrc=inside([p for p in xen if p['kind'] == 'ohrc']),
+                         pits=inside(index('pits.json') or []), radar=radar, ohrc=inside([p for p in xen if p['kind'] == 'ohrc']),
                          hardware=inside([p for p in xen if p['kind'] == 'hardware']), terrain=inside([p for p in xen if p['kind'] == 'terrain']))
     return out
 
@@ -618,9 +632,8 @@ def nac_preview(m, p, cdir):
 def radar_preview(m, p, cdir):
     out = os.path.join(cdir, 'radar'); os.makedirs(out, exist_ok=True); f = os.path.join(out, p['ref'] + '.jpg')
     if not os.path.exists(f):
-        src = os.path.join(CACHE, 'lrs', p['ref'] + '.img')
-        for alt in (os.path.join(DATA, 'kaguya-lrs', p['ref'] + '.img'),):
-            if os.path.exists(alt): src = alt
+        src = os.path.join(DATA, 'kaguya-lrs', p['ref'] + '.img')
+        if not os.path.exists(src): src = os.path.join(CACHE, 'lrs', p['ref'] + '.img')
         if not os.path.exists(src): curl_to(f"https://data.darts.isas.jaxa.jp/pub/pds3/sln-l-lrs-5-sndr-ss-sar05-power-v1.0/{p['day']}/data/{p['ref']}.img", src)
         n = p['track']['n']; raw = np.fromfile(src, np.uint8); hdr = raw[:55 * n].reshape(n, 55); img = raw[55 * n:55 * n + 1000 * n].reshape(1000, n)
         lat = hdr[:, 29:33].copy().view('<f4')[:, 0]; b = m['bbox']; pad = max(b['north'] - b['south'], 1.5)
@@ -631,7 +644,7 @@ def radar_preview(m, p, cdir):
         d = ImageDraw.Draw(im); inside = np.where((lat[c0:c1] >= b['south']) & (lat[c0:c1] <= b['north']))[0]
         if len(inside):
             for x in (inside.min(), inside.max()): d.line([x / (c1 - c0) * 1200, 0, x / (c1 - c0) * 1200, 700], fill=(255, 60, 60), width=2)
-        im.save(f, quality=85); os.makedirs(os.path.join(cdir, 'radar'), exist_ok=True)
+        im.save(f, quality=85)
     return dict(img=f"radar/{p['ref']}.jpg", extra='Across: distance along the orbit. Down: echo delay. The bright line is the surface; the red lines mark where the track enters and leaves the box.')
 
 
@@ -682,10 +695,9 @@ class Handler(SimpleHTTPRequestHandler):
 
     def translate_path(self, path):
         p = urllib.parse.unquote(path.split('?')[0])
-        for prefix, base in (('/captures/', CAPS),):
-            if p.startswith(prefix):
-                full = os.path.realpath(os.path.join(base, p[len(prefix):]))
-                return full if full.startswith(os.path.realpath(base) + os.sep) else os.path.join(SITE, '__none__')
+        if p.startswith('/captures/'):   # capture folders, kept outside the site; nothing outside CAPS is served
+            full = os.path.realpath(os.path.join(CAPS, p[len('/captures/'):]))
+            return full if full.startswith(os.path.realpath(CAPS) + os.sep) else os.path.join(SITE, '__none__')
         return super().translate_path(path)
 
     def do_GET(self):

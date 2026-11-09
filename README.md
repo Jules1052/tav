@@ -36,11 +36,11 @@ cd tav
 ./start.sh
 ```
 
-The first run creates `.venv` and installs the dependencies. Tav then opens in your browser at `http://localhost:8060`. Set `PORT` to use another port.
+The first run creates `.venv` and installs the dependencies. Tav then opens the map in your browser at `http://localhost:8060/tav-app.html`. Set `PORT` to use another port.
 
 ## Open the map
 
-Go to `http://localhost:8060/tav-app.html`. Draw a rectangle or polygon, choose the layers and the detail (512, 1,024 or 2,048 pixels on the longest side), then press Download. Open any capture to show or hide each layer, click a point to see its picture, or turn the 3D mesh.
+Draw a rectangle or polygon, choose the layers and the detail (512, 1,024 or 2,048 pixels on the longest side), then press Download. Open any capture to show or hide each layer, click a point to see its picture, or turn the 3D mesh.
 
 Captures are saved in `captures/<id>/`. Read `manifest.json` first: it describes every file, its source, resolution and bounds.
 
@@ -76,6 +76,23 @@ curl localhost:8060/api/captures/<id>
 ```
 
 The example box is the Marius Hills pit. Add `"options": {"layers": [...], "max_px": 2048}` to a capture to choose the layers and the detail.
+
+## Web version
+
+The map also runs without the server. `site/` is a static site: with no Tav server behind it, the page makes each capture itself (`site/tav-web.js`) and keeps it in the browser, to save as a `.zip`. Some archives send no CORS header, so `worker/index.js` passes their byte ranges through. Both run on the Cloudflare Workers free plan:
+
+```sh
+npm install
+npm run dev      # http://localhost:8787
+npm run deploy
+```
+
+The Kaguya layers at 7 m, full archive downloads, radar and Xenarch pictures and the API need the local server.
+
+## Development
+
+- `tests/reference.py run` captures five fixed boxes and compares them with `tests/reference/`. `npm run test:web` checks that the web version makes the same files (it needs Chromium; see the top of `tests/web_reference.mjs`).
+- `tav/build_index.py` rebuilds the lookup tables in `site/index/` (names, pits, craters, geology, radar tracks, Xenarch points) from the catalogues in `data/tav/`. It also needs `pyshp`.
 
 > [!NOTE]
 > Data sources:

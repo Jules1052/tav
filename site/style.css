@@ -63,8 +63,8 @@ section { padding: 56px 0 8px; }
 nav { position: sticky; top: 0; z-index: 2; border-bottom: 1px solid var(--line);
       background: var(--nav); backdrop-filter: blur(6px); }
 nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 76px; }
-.brand { font: 500 33.8px var(--font); letter-spacing: -.01em; white-space: nowrap; color: var(--ink); text-decoration: none; }
-.brand .label { margin-left: 10px; }
+.brand { display: inline-flex; align-items: center; gap: 12px; font: 500 33.8px var(--font); letter-spacing: -.01em; white-space: nowrap; color: var(--ink); text-decoration: none; }
+.brand .glyph { font: 600 40px "Arial Hebrew", "SF Hebrew", Arial, sans-serif; line-height: 1; color: var(--accent); }
 nav .links { display: flex; align-items: center; gap: 22px; }
 nav .links a { color: var(--blue); text-decoration: none; }
 nav .links a:hover { text-decoration: underline; text-underline-offset: 4px; }
@@ -152,8 +152,6 @@ body:has(.home) .wrap { max-width: 1480px; }
 .head.center { justify-content: center; border-bottom: 0; padding-bottom: 0; margin-bottom: 36px; }
 .head.center h2 { font-size: 46.8px; }
 footer .made { text-transform: none; letter-spacing: .04em; }
-.brand { display: inline-flex; align-items: center; gap: 12px; }
-.brand .glyph { font: 600 40px "Arial Hebrew", "SF Hebrew", Arial, sans-serif; line-height: 1; color: var(--accent); }
 
 /* Four tiles on one row; two per row on a tablet, one on a phone */
 .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
@@ -186,11 +184,10 @@ footer .made { text-transform: none; letter-spacing: .04em; }
 .pin::before { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 1.5px #000, 0 0 10px 2px var(--green); }
 .pin[aria-pressed="true"]::before { inset: 7px; background: #fff; box-shadow: 0 0 0 2px var(--green), 0 0 18px 6px var(--green); }
 .pin.far, .globe:not(.ready) .pin { display: none; }
-.modes, .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.modes { display: flex; flex-wrap: wrap; gap: 6px; }
 .tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin: 20px 2px 0; }
-.chips { margin: 16px 2px 0; }
 /* The four sites stay on one row: tighter type, and the row scrolls sideways if the panel is too narrow */
-.chips { flex-wrap: nowrap; gap: 5px; overflow-x: auto; scrollbar-width: none; }
+.chips { display: flex; gap: 5px; overflow-x: auto; scrollbar-width: none; margin: 16px 2px 0; }
 .modes button, .chips button { font: 500 16.9px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2);
   background: none; border: 1px solid var(--line); border-radius: 4px; padding: 6px 10px; cursor: pointer; }
 .modes button[aria-pressed="true"] { color: var(--ink); border-color: var(--violet); background: color-mix(in srgb, var(--violet) 16%, transparent); box-shadow: 0 0 14px color-mix(in srgb, var(--violet) 65%, transparent); }

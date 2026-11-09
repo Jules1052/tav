@@ -148,7 +148,6 @@
   let visible = true;
   new IntersectionObserver(es => { visible = es[0].isIntersecting; if (visible) { last = 0; loop(); } }).observe(stage);
   new ResizeObserver(() => draw()).observe(stage);
-  new MutationObserver(() => { colours(); draw(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-palette'] });
 
   // Drag to turn
   let drag = null;

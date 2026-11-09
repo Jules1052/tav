@@ -64,6 +64,13 @@
     }
     return c;
   }
+  function trackCrossing(t, s, n, w, e) {   // server.track_crossing: [lat, lon] where a radar sounder track crosses the box, or null
+    const a = Math.min(t.lat0, t.lat1), b = Math.max(t.lat0, t.lat1);
+    if (b < s || a > n || t.lat1 === t.lat0) return null;
+    const lat = Math.min(Math.max((s + n) / 2, a), b), dl = pyMod(t.lon1 - t.lon0 + 180, 360) - 180;
+    const lon = w180(t.lon0 + dl * (lat - t.lat0) / (t.lat1 - t.lat0));
+    return w <= lon && lon <= e ? [lat, lon] : null;
+  }
   const pad = (v, n) => String(v).padStart(n, '0');
   const stamp = (d, sep) => d.getFullYear() + '-' + pad(d.getMonth() + 1, 2) + '-' + pad(d.getDate(), 2) + sep + pad(d.getHours(), 2) + ':' + pad(d.getMinutes(), 2) + ':' + pad(d.getSeconds(), 2);
   const pyStr = v => Number.isInteger(v) ? v.toFixed(1) : String(v);   // str() of a Python float
@@ -152,6 +159,7 @@
       url: GEO + '/lro/lro-l-mrflro-5-global-mosaic-v1/lromrf_1001/data/128ppd/global_cpr_128ppd_simp_0c.img',
       valid: a => a > 0 && a < 50, source: 'Mini-RF global mosaic, circular polarisation ratio, 237 m per pixel' },
   ];
+  const elevationRaster = (s, n) => n <= 60 && s >= -60 ? RASTERS[0] : RASTERS[1];   // server.elevation_raster: SLDEM2015, LOLA beyond 60°
   function rasterFiles(r, r0, r1, c0, c1) {   // Raster._files
     const cols = Math.round(360 * r.ppd);
     if (!r.tiles) return [{ url: r.url, fr: r0, fc: c0, nr: r1 - r0, nc: c1 - c0, width: cols, orr: 0, occ: 0 }];
@@ -273,7 +281,7 @@
     chunks.forEach((c, i) => out.set(c, b0 + 8 + offs[i]));
     return new Blob([out], { type: 'model/gltf-binary' });
   }
-  function polygonMask(ring, d, W, H) {   // cells whose centre is inside the ring (server.mask draws the same outline with PIL)
+  function polygonMask(ring, d, W, H) {   // server.polygon_mask: cells whose centre is inside the ring, same arithmetic
     const m = new Uint8Array(W * H), pts = ring.map(([la, lo]) => [(lo - d.w) / (d.e - d.w) * W, (d.n - la) / (d.n - d.s) * H]);
     for (let y = 0; y < H; y++) {
       const yc = y + 0.5, xs = [];
@@ -388,7 +396,7 @@
     }
 
     async elevation() {
-      const r = this.n <= 60 && this.s >= -60 ? RASTERS[0] : RASTERS[1]; let got;
+      const r = elevationRaster(this.s, this.n); let got;
       try { got = await this.raster(r); } catch (ex) {
         if (r === RASTERS[1]) throw ex;
         this.m.notes.push('SLDEM failed (' + short(ex).slice(0, 80) + '), used LOLA instead'); got = await this.raster(RASTERS[1]);
@@ -463,7 +471,7 @@
     }
 
     async points() {
-      const pts = [], mid = (this.s + this.n) / 2, clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+      const pts = [], clamp = (v, a, b) => Math.min(Math.max(v, a), b);
       const nac = this.want.has('points_nac') ? ((await products(this.id)).find(c => c.type === 'CDRNAC4') || { items: [] }).items : [];
       for (const it of nac) {
         if (it.lat === null) continue;
@@ -480,11 +488,9 @@
           text: (it.time || '').slice(0, 10) + ', ' + (it.m_px === null ? 'None' : pyStr(it.m_px)) + ' m per pixel' + sun + '. Raw strip, ' + (it.bytes / 1e6).toFixed(0) + ' MB.', ref: it.id, incidence: it.incidence });
       }
       for (const t of this.want.has('points_radar') ? (await index('lrs_tracks.json')) || [] : []) {
-        const a = Math.min(t.lat0, t.lat1), b = Math.max(t.lat0, t.lat1);
-        if (b < this.s || a > this.n || t.lat1 === t.lat0) continue;
-        const dl = pyMod(t.lon1 - t.lon0 + 180, 360) - 180, lon = w180(t.lon0 + dl * (clamp(mid, a, b) - t.lat0) / (t.lat1 - t.lat0));
-        if (this.w <= lon && lon <= this.e)
-          pts.push({ kind: 'radar', lat: clamp(mid, a, b), lon, title: 'Radar sounder track ' + t.id.slice(-14),
+        const x = trackCrossing(t, this.s, this.n, this.w, this.e);
+        if (x)
+          pts.push({ kind: 'radar', lat: x[0], lon: x[1], title: 'Radar sounder track ' + t.id.slice(-14),
             text: 'Kaguya LRS, ' + t.day.slice(0, 4) + '-' + t.day.slice(4, 6) + '-' + t.day.slice(6) + '. A vertical cut through the ground along the orbit, 25 m per pixel in depth.', ref: t.id, day: t.day, track: t });
       }
       for (const p of this.want.has('points_xenarch') ? (await index('xenarch.json')) || [] : [])
@@ -550,21 +556,15 @@
     const s = Math.min(...la), n = Math.max(...la), w = Math.min(...lo), e = Math.max(...lo), mid = (s + n) / 2;
     const inside = pts => pts.filter(p => s <= p.lat && p.lat <= n && w <= p.lon && p.lon <= e && inRing(p.lat, p.lon, ring)).length;
     const out = { size_km: [pyRound((e - w) * KM_DEG * Math.cos(mid * (Math.PI / 180)), 2), pyRound((n - s) * KM_DEG, 2)], layers: {} };
-    [['elevation', n <= 60 && s >= -60 ? RASTERS[0] : RASTERS[1]], ['thermal_night', RASTERS[2]], ['gravity', RASTERS[3]], ['radar_cpr', RASTERS[4]]].forEach(([key, r]) => {
+    [['elevation', elevationRaster(s, n)], ['thermal_night', RASTERS[2]], ['gravity', RASTERS[3]], ['radar_cpr', RASTERS[4]]].forEach(([key, r]) => {
       out.layers[key] = { title: r.title, m_px: pyRound(KM_DEG * 1000 / r.ppd, 1), px: [Math.trunc((e - w) * r.ppd) + 1, Math.trunc((n - s) * r.ppd) + 1], available: Math.min(n, r.top) > Math.max(s, r.bot), source: r.source };
     });
     out.layers.imagery = { title: 'Imagery · LROC WAC', m_px: 83, px: [Math.trunc((e - w) * 364) + 1, Math.trunc((n - s) * 364) + 1], available: true, source: 'LROC WAC global mosaic, NASA Moon Trek' };
     let tiles = 0;
     for (let top = Math.floor(s / 3) * 3 + 3; top < Math.ceil(n / 3) * 3 + 1; top += 3) for (let west = Math.floor(pyMod(w, 360) / 3) * 3; west < Math.ceil((pyMod(w, 360) + (e - w)) / 3) * 3; west += 3) tiles++;
-    out.kaguya = { tiles, on_disk: 0, download_mb: tiles * 604, web: true };
+    out.kaguya = { tiles, on_disk: 0, download_mb: tiles * 604 };
     const [c, nm, pits, xen, lrs] = await Promise.all([cratersIn(s, n, w, e), index('names.json'), index('pits.json'), index('xenarch.json'), index('lrs_tracks.json')]);
-    let radar = 0;
-    for (const t of lrs || []) {
-      const a = Math.min(t.lat0, t.lat1), b = Math.max(t.lat0, t.lat1);
-      if (b < s || a > n || t.lat1 === t.lat0) continue;
-      const dl = pyMod(t.lon1 - t.lon0 + 180, 360) - 180, l = w180(t.lon0 + dl * (Math.min(Math.max(mid, a), b) - t.lat0) / (t.lat1 - t.lat0));
-      radar += w <= l && l <= e ? 1 : 0;
-    }
+    const radar = (lrs || []).filter(t => trackCrossing(t, s, n, w, e)).length;
     out.counts = { craters: c ? c.length : null, names: (nm || []).filter(x => s <= x[2] && x[2] <= n && w <= x[3] && x[3] <= e).length, pits: inside(pits || []), radar,
       ohrc: inside((xen || []).filter(p => p.kind === 'ohrc')), hardware: inside((xen || []).filter(p => p.kind === 'hardware')), terrain: inside((xen || []).filter(p => p.kind === 'terrain')) };
     return out;

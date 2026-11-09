@@ -22,5 +22,5 @@ if [ ! -x .venv/bin/python ]; then
   python3 -m venv .venv && .venv/bin/pip -q install --upgrade pip && .venv/bin/pip -q install -r tav/requirements.txt || {
     echo "Could not set up Python packages; serving the site without Tav."; cd site && exec python3 -m http.server "$PORT" --bind 127.0.0.1; }
 fi
-(sleep 1; open "$URL") &
+(sleep 1; open "$URL/tav-app.html") &
 exec .venv/bin/python tav/server.py

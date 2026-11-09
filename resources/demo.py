@@ -5,7 +5,7 @@ and the project .venv with playwright (`.venv/bin/python -m playwright install c
 
   .venv/bin/python resources/demo.py
 """
-import os, sys, time
+import io, os, time
 from playwright.sync_api import sync_playwright
 from PIL import Image
 
@@ -35,7 +35,7 @@ def main():
 
         def shot(ms=120, n=1):
             for _ in range(n):
-                frames.append((Image.open(__import__('io').BytesIO(pg.screenshot())).convert('RGB'), ms))
+                frames.append((Image.open(io.BytesIO(pg.screenshot())).convert('RGB'), ms))
 
         def move(x, y, steps=12, ms=40):
             nonlocal cx, cy
