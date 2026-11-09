@@ -16,7 +16,7 @@ from PIL import Image, ImageDraw, TiffImagePlugin
 
 Image.MAX_IMAGE_PIXELS = None
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SITE, IDX = os.path.join(ROOT, 'site'), os.path.join(ROOT, 'tav', 'index')
+SITE, IDX = os.path.join(ROOT, 'site'), os.path.join(ROOT, 'site', 'index')
 DATA, CAPS = os.path.join(ROOT, 'data', 'tav'), os.path.join(ROOT, 'captures')
 CACHE = os.path.join(DATA, 'cache')
 R_MOON, KM_DEG = 1737.4, 30.3234
@@ -262,17 +262,40 @@ def in_ring(lat, lon, ring):
 
 
 # ------------------------------------------------------------------ captures
-INDEX, JOBS, LOCK = {}, {}, threading.Lock()
+INDEX, JOBS, OPS, LOCK = {}, {}, {}, threading.Lock()   # JOBS: capture id → {'type:id': download progress}
+
+
+def capture_lock(cid):
+    """One change to a capture at a time. A capture run, a 3D rebuild and the Kaguya update after a download each
+    load the manifest, change it and save it whole: two at once would lose the changes of one."""
+    with LOCK: return OPS.setdefault(cid, threading.Lock())
 
 
 def index(name):
     if name not in INDEX:
         p = os.path.join(IDX, name)
         if not os.path.exists(p): INDEX[name] = None
-        elif name.endswith('.npy'): INDEX[name] = np.load(p)
+        elif name.endswith('.bin'): INDEX[name] = np.fromfile(p, '<f4').reshape(-1, 3)
         elif name.endswith('.png'): INDEX[name] = np.array(Image.open(p))
         else: INDEX[name] = json.load(open(p))
     return INDEX[name]
+
+
+def craters_in(s, n, w, e):
+    """Craters [lat, lon, diameter_km] inside a box, edges included, from the 10° tiles in site/index/craters/ (None if not built)."""
+    meta = index('craters/index.json')
+    if not meta: return None
+    d = meta['deg']; tiles = [f'{a}_{b}' for a in range(max(-90, math.floor(s / d) * d), min(90 - d, math.floor(n / d) * d) + 1, d)
+                              for b in range(max(-180, math.floor(w / d) * d), min(180 - d, math.floor(e / d) * d) + 1, d)]
+    c = [index(f'craters/{t}.bin') for t in tiles if t in meta['tiles']]
+    c = np.concatenate(c) if c else np.zeros((0, 3), np.float32)
+    return c[(c[:, 0] >= s) & (c[:, 0] <= n) & (c[:, 1] >= w) & (c[:, 1] <= e)]
+
+
+def products(cdir, typ):
+    """The archive products of one type that cross a capture's box, from its catalogue.json (None if not catalogued)."""
+    p = os.path.join(cdir, 'catalogue.json')
+    return next((c['items'] for c in json.load(open(p)) if c['type'] == typ), None) if os.path.exists(p) else None
 
 
 ALL_LAYERS = ['imagery', 'elevation', 'thermal_night', 'gravity', 'radar_cpr', 'vectors', 'catalogue', 'points_nac', 'points_radar', 'points_xenarch']
@@ -285,8 +308,12 @@ class Capture:
         la, lo = [p[0] for p in self.ring], [p[1] for p in self.ring]
         self.s, self.n, self.w, self.e = min(la), max(la), min(lo), max(lo)
         mid = (self.s + self.n) / 2
-        self.id = time.strftime('tav-%Y%m%dT%H%M%S') + f"-{abs(mid):04.1f}{'n' if mid >= 0 else 's'}{(self.w + self.e) / 2 % 360:05.1f}e".replace('.', '_')
-        self.dir = os.path.join(CAPS, self.id); os.makedirs(self.dir, exist_ok=True)
+        base = time.strftime('tav-%Y%m%dT%H%M%S') + f"-{abs(mid):04.1f}{'n' if mid >= 0 else 's'}{(self.w + self.e) / 2 % 360:05.1f}e".replace('.', '_')
+        self.id, k = base, 1
+        while True:   # the same place in the same second: -2, -3… (creating the folder is the atomic claim)
+            try: os.makedirs(os.path.join(CAPS, self.id)); break
+            except FileExistsError: k += 1; self.id = f'{base}-{k}'
+        self.dir = os.path.join(CAPS, self.id)
         wk, hk = (self.e - self.w) * KM_DEG * math.cos(math.radians(mid)), (self.n - self.s) * KM_DEG
         self.m = dict(id=self.id, created=time.strftime('%Y-%m-%dT%H:%M:%S'), shape=shape, ring=self.ring,
                       bbox=dict(south=self.s, north=self.n, west=self.w, east=self.e), size_km=[round(wk, 2), round(hk, 2)],
@@ -295,7 +322,7 @@ class Capture:
 
     @classmethod
     def load(cls, cid):
-        c = cls.__new__(cls); c.dir = os.path.join(CAPS, cid)
+        c = cls.__new__(cls); c.id, c.dir = cid, os.path.join(CAPS, cid)
         with LOCK: c.m = json.load(open(os.path.join(c.dir, 'manifest.json')))
         b = c.m['bbox']; c.ring = c.m['ring']; c.s, c.n, c.w, c.e = b['south'], b['north'], b['west'], b['east']
         o = c.m.get('options') or {}; c.want = set(o.get('layers') or ALL_LAYERS); c.max_px = int(o.get('max_px') or 1024); c.tc_download = False
@@ -384,10 +411,10 @@ class Capture:
             json.dump(dict(type='FeatureCollection', features=feats), open(os.path.join(self.dir, name), 'w'))
             self.m['vectors'].append(dict(key=name.split('.')[0], title=title, file=name, count=len(feats)))
         pt = lambda la, lo, **p: dict(type='Feature', geometry=dict(type='Point', coordinates=[round(float(lo), 5), round(float(la), 5)]), properties=p)
-        c = index('craters.npy')
+        c = craters_in(self.s, self.n, self.w, self.e)
         if c is not None:
-            m = (c[:, 0] >= self.s) & (c[:, 0] <= self.n) & (c[:, 1] >= self.w) & (c[:, 1] <= self.e); s = c[m]; s = s[in_ring(s[:, 0], s[:, 1], self.ring)]
-            total = len(s); s = s[np.argsort(-s[:, 2])][:5000]
+            s = c[in_ring(c[:, 0], c[:, 1], self.ring)]
+            total = len(s); s = s[np.lexsort((s[:, 1], s[:, 0], -s[:, 2]))][:5000]   # largest first, ties by lat then lon
             dump('craters.geojson', [pt(a, b, diameter_km=round(float(d), 3)) for a, b, d in s], 'Craters of 1 km or more')
             if total > 5000: self.m['notes'].append(f'Craters: kept the 5,000 largest of {total:,}')
         nm = index('names.json')
@@ -419,21 +446,24 @@ class Capture:
                                   footprint=x.get('Footprint_C0_geometry') or x.get('Footprint_geometry'), lat=num('Center_latitude'), lon=num('Center_longitude'),
                                   incidence=num('Incidence_angle'), emission=num('Emission_angle'), m_px=num('Map_resolution'), time=x.get('UTC_start_time') or x.get('Observation_time')))
             return dict(type=pt, title=title, count=int(d.get('Count') or len(items)), listed=len(items), bytes=sum(i['bytes'] for i in items), items=items)
+        full = []
         with ThreadPoolExecutor(4) as ex:
             for t, r in zip(ODE_TYPES, ex.map(lambda t: _try(q, t), ODE_TYPES)):
                 if isinstance(r, Exception): self.m['notes'].append(f'{t[3]}: catalogue query failed ({str(r)[:80]})')
-                else: self.m['catalogue'].append(r)
-        json.dump(self.m['catalogue'], open(os.path.join(self.dir, 'catalogue.json'), 'w'), indent=1)
+                else: full.append(r)
+        json.dump(full, open(os.path.join(self.dir, 'catalogue.json'), 'w'), indent=1)
+        # the manifest keeps the counts; the product lists (up to 400 per type, ~1 MB for a big box) live in catalogue.json
+        self.m['catalogue'] = [dict({k: v for k, v in c.items() if k != 'items'}, file='catalogue.json') for c in full]
 
     def kaguya(self):
         """Kaguya Terrain Camera at 7.4 m, from tiles already on disk (JAXA serves whole 302 MB tiles only)."""
         made = {}
         for typ, key, title, dt, nod, unit in (('TCORT', 'imagery_tc', 'Imagery · Kaguya TC', '>u2', 0, 'DN'), ('TCDTMM', 'elevation_tc', 'Elevation · Kaguya TC', '>i2', -9999, 'm')):
-            c = next((c for c in self.m['catalogue'] if c['type'] == typ), None)
-            if not c: continue
+            items = products(self.dir, typ)
+            if not items: continue
             ppd = 4096; rows, cols = int(math.ceil((self.n - self.s) * ppd)), int(math.ceil((self.e - self.w) * ppd)); k = max(1, int(math.ceil(max(rows, cols) / (1.5 * self.max_px))))
             out = np.full((len(range(0, rows, k)), len(range(0, cols, k))), np.nan, np.float32); missing = []
-            for it in c['items']:
+            for it in items:
                 url = next((u for u in it['files'] if u.lower().endswith('.img')), None); mm = re.search(r'_([NS])(\d+)E(\d+)[NS]\d+E\d+', url or '')
                 if not mm: continue
                 top, west = (1 if mm.group(1) == 'N' else -1) * int(mm.group(2)), w180(int(mm.group(3))); f = os.path.basename(url)
@@ -472,20 +502,18 @@ class Capture:
 
     def points(self):
         pts = []; mid = (self.s + self.n) / 2; clamp = lambda v, a, b: min(max(v, a), b)
-        for c in self.m['catalogue']:
-            if c['type'] != 'CDRNAC4' or 'points_nac' not in self.want: continue
-            for it in c['items']:
-                if it['lat'] is None: continue
-                sun = f", sun {it['incidence']:.0f}° from vertical" + (' (night)' if it['incidence'] > 90 else '') if it['incidence'] is not None else ''
-                la, lo = it['lat'], w180(it['lon']); centred = self.s <= la <= self.n and self.w <= lo <= self.e
-                fp = [] if centred else re.findall(r'(-?[\d.]+) (-?[\d.]+)', it['footprint'] or '')
-                if fp:   # dot at the middle of the part of the strip that lies inside the box
-                    xs, ys = [w180(x) for x, _ in fp], [float(y) for _, y in fp]
-                    a, b, c, d = max(min(xs), self.w), min(max(xs), self.e), max(min(ys), self.s), min(max(ys), self.n)
-                    if a <= b and c <= d: la, lo = (c + d) / 2, (a + b) / 2
-                la, lo = clamp(la, self.s, self.n), clamp(lo, self.w, self.e)
-                pts.append(dict(kind='nac', lat=la, lon=lo, title=f"NAC frame {it['id'].split('.')[-1].upper()}",
-                                text=f"{(it['time'] or '')[:10]}, {it['m_px']} m per pixel{sun}. Raw strip, {it['bytes'] / 1e6:.0f} MB.", ref=it['id'], incidence=it['incidence']))
+        for it in (products(self.dir, 'CDRNAC4') or []) if 'points_nac' in self.want else []:
+            if it['lat'] is None: continue
+            sun = f", sun {it['incidence']:.0f}° from vertical" + (' (night)' if it['incidence'] > 90 else '') if it['incidence'] is not None else ''
+            la, lo = it['lat'], w180(it['lon']); centred = self.s <= la <= self.n and self.w <= lo <= self.e
+            fp = [] if centred else re.findall(r'(-?[\d.]+) (-?[\d.]+)', it['footprint'] or '')
+            if fp:   # dot at the middle of the part of the strip that lies inside the box
+                xs, ys = [w180(x) for x, _ in fp], [float(y) for _, y in fp]
+                a, b, c, d = max(min(xs), self.w), min(max(xs), self.e), max(min(ys), self.s), min(max(ys), self.n)
+                if a <= b and c <= d: la, lo = (c + d) / 2, (a + b) / 2
+            la, lo = clamp(la, self.s, self.n), clamp(lo, self.w, self.e)
+            pts.append(dict(kind='nac', lat=la, lon=lo, title=f"NAC frame {it['id'].split('.')[-1].upper()}",
+                            text=f"{(it['time'] or '')[:10]}, {it['m_px']} m per pixel{sun}. Raw strip, {it['bytes'] / 1e6:.0f} MB.", ref=it['id'], incidence=it['incidence']))
         for t in (index('lrs_tracks.json') or []) if 'points_radar' in self.want else []:
             a, b = min(t['lat0'], t['lat1']), max(t['lat0'], t['lat1'])
             if b < self.s or a > self.n or t['lat1'] == t['lat0']: continue
@@ -500,17 +528,22 @@ class Capture:
         self.m['point_counts'] = {k: sum(1 for p in pts if p['kind'] == k) for k in ('nac', 'radar', 'ohrc', 'hardware', 'terrain')}
 
     def run(self):
-        w = self.want
-        if 'imagery' in w: self.step('Imagery', self.imagery)
-        self.step('Elevation and 3D mesh', self.elevation)   # always: the 3D view needs it
-        for r in RASTERS[2:]:
-            if r.key in w: self.step(r.title, lambda r=r: self.raster(r))
-        if 'vectors' in w: self.step('Craters, names, pits, geology', self.vectors)
-        if 'catalogue' in w or 'points_nac' in w or self.tc_download:
-            self.step('Catalogue of products', self.catalogue)
-            self.step('Kaguya TC, 7 m', self.kaguya)
-        self.step('Points', self.points)
-        self.m['status'] = 'complete'; self.m['step'] = 'done'; self.save()
+        with capture_lock(self.id):
+            w = self.want
+            if 'imagery' in w: self.step('Imagery', self.imagery)
+            self.step('Elevation and 3D mesh', self.elevation)   # always: the 3D view needs it
+            for r in RASTERS[2:]:
+                if r.key in w: self.step(r.title, lambda r=r: self.raster(r))
+            if 'vectors' in w: self.step('Craters, names, pits, geology', self.vectors)
+            if 'catalogue' in w or 'points_nac' in w or self.tc_download:
+                self.step('Catalogue of products', self.catalogue)
+                self.step('Kaguya TC, 7 m', self.kaguya)
+            self.step('Points', self.points)
+            self.m['status'] = 'complete'; self.m['step'] = 'done'; self.save()
+
+
+def add_mesh(cid):
+    with capture_lock(cid): Capture.load(cid).add_mesh()   # loaded inside the lock, so it starts from the latest manifest
 
 
 def plan(ring):
@@ -529,14 +562,14 @@ def plan(ring):
         f = f'_MAP_02_{ns(top)}E{west % 360:03d}{ns(top - 3)}E{(west + 3) % 360 if (west + 3) % 360 else 360:03d}SC.img'
         have += all(any(os.path.exists(os.path.join(d, pre + f)) for d in (os.path.join(DATA, 'kaguya-tc'), os.path.join(CACHE, 'tc'))) for pre in ('TCO', 'DTM'))
     out['kaguya'] = dict(tiles=len(tiles), on_disk=have, download_mb=(len(tiles) - have) * 604)
-    c = index('craters.npy'); cm = (c[:, 0] >= s) & (c[:, 0] <= n) & (c[:, 1] >= w) & (c[:, 1] <= e) if c is not None else None
-    xen = [p for p in (index('xenarch.json') or [])]; radar = 0
+    c = craters_in(s, n, w, e)
+    xen =[p for p in (index('xenarch.json') or [])]; radar = 0
     for t in index('lrs_tracks.json') or []:
         a, b = min(t['lat0'], t['lat1']), max(t['lat0'], t['lat1'])
         if b < s or a > n or t['lat1'] == t['lat0']: continue
         dl = ((t['lon1'] - t['lon0'] + 180) % 360) - 180; lon = w180(t['lon0'] + dl * (min(max(mid, a), b) - t['lat0']) / (t['lat1'] - t['lat0']))
         radar += w <= lon <= e
-    out['counts'] = dict(craters=int(cm.sum()) if cm is not None else None, names=sum(1 for x in (index('names.json') or []) if s <= x[2] <= n and w <= x[3] <= e),
+    out['counts'] = dict(craters=len(c) if c is not None else None, names=sum(1 for x in (index('names.json') or []) if s <= x[2] <= n and w <= x[3] <= e),
                          pits=inside(index('pits.json') or []), radar=int(radar), ohrc=inside([p for p in xen if p['kind'] == 'ohrc']),
                          hardware=inside([p for p in xen if p['kind'] == 'hardware']), terrain=inside([p for p in xen if p['kind'] == 'terrain']))
     return out
@@ -549,7 +582,7 @@ def _try(f, *a):
 
 # ------------------------------------------------- point previews (on click)
 def nac_preview(m, p, cdir):
-    it = next(i for c in m['catalogue'] if c['type'] == 'CDRNAC4' for i in c['items'] if i['id'] == p['ref'])
+    it = next(i for i in products(cdir, 'CDRNAC4') or [] if i['id'] == p['ref'])
     name = p['ref'].split('.')[-1]; out = os.path.join(cdir, 'nac'); os.makedirs(out, exist_ok=True)
     f_c, f_w = os.path.join(out, name + '_centre.jpg'), os.path.join(out, name + '_wide.jpg')
     if not os.path.exists(f_c):
@@ -604,19 +637,20 @@ def xen_preview(m, p, cdir, i):
     return dict(img='xenarch/' + os.path.basename(rel), n=len(p['files']), i=i % len(p['files']))
 
 
-def fetch_products(cap_dir, m, typ, pid):
+def fetch_products(cid, typ, pid):
     """Download the full files of one product (or a whole product type) into the capture folder."""
-    c = next(c for c in m['catalogue'] if c['type'] == typ); items = [i for i in c['items'] if pid in (None, i['id'])]
-    key = f'{typ}:{pid or "all"}'; st = JOBS[key] = dict(done=0, total=len(items), bytes=0, state='running', errors=[])
+    cap_dir = os.path.join(CAPS, cid); items = [i for i in products(cap_dir, typ) or [] if pid in (None, i['id'])]
+    st = dict(done=0, total=len(items), bytes=0, state='running', errors=[])
+    with LOCK: JOBS.setdefault(cid, {})[f'{typ}:{pid or "all"}'] = st
     def one(it):
         for u in it['files']:
             try: p = os.path.join(cap_dir, typ.lower(), os.path.basename(u)); os.path.exists(p) or curl_to(u, p, timeout=7200); st['bytes'] += os.path.getsize(p)
             except Exception as ex: st['errors'].append(str(ex)[:120])
         st['done'] += 1
     with ThreadPoolExecutor(3) as ex: list(ex.map(one, items))
-    if typ in ('TCORT', 'TCDTMM'):
-        c = Capture.__new__(Capture); c.m = m; c.dir = cap_dir; c.ring = m['ring']; b = m['bbox']; c.s, c.n, c.w, c.e = b['south'], b['north'], b['west'], b['east']
-        c.m['notes'] = [n for n in c.m['notes'] if 'not on disk yet' not in n]; c.kaguya(); c.save()
+    if typ in ('TCORT', 'TCDTMM'):   # the download can take hours: start from the manifest as it is now, not as it was
+        with capture_lock(cid):
+            c = Capture.load(cid); c.m['notes'] = [n for n in c.m['notes'] if 'not on disk yet' not in n]; c.kaguya(); c.save()
     st['state'] = 'done'
 
 
@@ -638,7 +672,7 @@ class Handler(SimpleHTTPRequestHandler):
 
     def translate_path(self, path):
         p = urllib.parse.unquote(path.split('?')[0])
-        for prefix, base in (('/captures/', CAPS), ('/index/', IDX)):
+        for prefix, base in (('/captures/', CAPS),):
             if p.startswith(prefix):
                 full = os.path.realpath(os.path.join(base, p[len(prefix):]))
                 return full if full.startswith(os.path.realpath(base) + os.sep) else os.path.join(SITE, '__none__')
@@ -647,14 +681,14 @@ class Handler(SimpleHTTPRequestHandler):
     def do_GET(self):
         u = urllib.parse.urlparse(self.path); q = urllib.parse.parse_qs(u.query); parts = u.path.strip('/').split('/')
         try:
-            if u.path == '/api/status': return self.send_json(dict(ok=True, root=ROOT, captures=CAPS, hf=bool(hf_headers()), index={n: os.path.exists(os.path.join(IDX, n)) for n in ('names.json', 'craters.npy', 'lrs_tracks.json', 'xenarch.json')}))
+            if u.path == '/api/status': return self.send_json(dict(ok=True, root=ROOT, captures=CAPS, hf=bool(hf_headers()), index={n: os.path.exists(os.path.join(IDX, n)) for n in ('names.json', 'craters/index.json', 'lrs_tracks.json', 'xenarch.json')}))
             if u.path == '/api/captures':
                 out = []
                 for d in sorted(os.listdir(CAPS), reverse=True) if os.path.isdir(CAPS) else []:
                     try: m = self.manifest(d); out.append({k: m[k] for k in ('id', 'created', 'status', 'size_km', 'bbox', 'ring', 'shape')})
                     except Exception: pass
                 return self.send_json(out)
-            if len(parts) == 3 and parts[:2] == ['api', 'captures']: return self.send_json(dict(self.manifest(parts[2]), jobs={k: v for k, v in JOBS.items()}))
+            if len(parts) == 3 and parts[:2] == ['api', 'captures']: return self.send_json(dict(self.manifest(parts[2]), jobs=dict(JOBS.get(parts[2], {}))))
             if len(parts) == 5 and parts[:2] == ['api', 'captures'] and parts[3] == 'point':
                 m = self.manifest(parts[2]); p = m['points'][int(parts[4])]; cdir = os.path.join(CAPS, parts[2])
                 r = nac_preview(m, p, cdir) if p['kind'] == 'nac' else radar_preview(m, p, cdir) if p['kind'] == 'radar' else xen_preview(m, p, cdir, int(q.get('i', ['0'])[0]))
@@ -676,9 +710,9 @@ class Handler(SimpleHTTPRequestHandler):
                 threading.Thread(target=c.run, daemon=True).start(); return self.send_json(dict(id=c.id))
             if self.path == '/api/plan': return self.send_json(plan(body['ring']))
             if len(parts) == 4 and parts[:2] == ['api', 'captures'] and parts[3] == 'mesh':
-                self.manifest(parts[2]); threading.Thread(target=Capture.load(parts[2]).add_mesh, daemon=True).start(); return self.send_json(dict(ok=True))
+                self.manifest(parts[2]); threading.Thread(target=add_mesh, args=(parts[2],), daemon=True).start(); return self.send_json(dict(ok=True))
             if len(parts) == 4 and parts[:2] == ['api', 'captures'] and parts[3] == 'fetch':
-                m = self.manifest(parts[2]); threading.Thread(target=fetch_products, args=(os.path.join(CAPS, parts[2]), m, body['type'], body.get('id')), daemon=True).start()
+                self.manifest(parts[2]); threading.Thread(target=fetch_products, args=(parts[2], body['type'], body.get('id')), daemon=True).start()
                 return self.send_json(dict(ok=True, job=f"{body['type']}:{body.get('id') or 'all'}"))
             self.send_json(dict(error='not found'), 404)
         except Exception as ex:

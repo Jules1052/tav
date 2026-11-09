@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 """Build the small lookup tables Tav needs (run once; needs numpy, pillow, pyshp).
 
-  python tav/build_index.py [--lrs]
+  python tav/build_index.py [names|pits|xenarch|craters|geology|--lrs …]   (no argument: all but --lrs)
 
-Reads the catalogues in data/tav/ and writes tav/index/:
+Reads the catalogues in data/tav/ and writes site/index/ (served with the site, so a static host has it too):
   names.json      IAU names (lat, lon, diameter, type)
   pits.json       Lunar Pit Atlas
   xenarch.json    Xenarch points: hardware sites, OHRC tiles, NAC terrain tiles
-  craters.npy     Robbins craters as float32 [lat, lon, diameter_km]
+  craters/        Robbins craters in 10° tiles of float32 [lat, lon, diameter_km] (+ index.json)
   geology.png     geologic unit code per pixel, 16 px/deg  (+ geology.json legend)
   lrs_tracks.json Kaguya radar sounder tracks (only with --lrs: fetches 2,579 labels from JAXA)
 """
-import csv, glob, json, os, re, struct, sys, urllib.request
+import csv, glob, json, os, re, sys, urllib.request
 from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-D, OUT = os.path.join(ROOT, 'data', 'tav'), os.path.join(ROOT, 'tav', 'index')
+D, OUT = os.path.join(ROOT, 'data', 'tav'), os.path.join(ROOT, 'site', 'index')
 os.makedirs(OUT, exist_ok=True)
 w180 = lambda lon: ((float(lon) + 180) % 360) - 180
 
@@ -38,18 +38,33 @@ def pits():
     print('pits', len(out))
 
 
+CRATER_DEG = 10
+
+
 def craters():
-    base = glob.glob(D + '/crater-database/extracted/*/*.shp')[0][:-4]
-    xy = np.fromfile(base + '.shp', np.uint8)[100:].reshape(-1, 28)[:, 12:28].copy().view('<f8')
-    f = open(base + '.dbf', 'rb'); h = f.read(32); n, hl, rl = struct.unpack('<IHH', h[4:12]); off, fo = 1, {}
-    while True:
-        d = f.read(32)
-        if d[0] == 0x0D: break
-        fo[d[:11].split(b'\0')[0].decode()] = (off, d[16]); off += d[16]
-    recs = np.memmap(base + '.dbf', np.uint8, 'r', offset=hl, shape=(n, rl)); o, l = fo['DIAM_C_IM']
-    diam = np.array(recs[:, o:o + l]).view(f'S{l}')[:, 0].astype(np.float32)
-    a = np.stack([xy[:, 1], ((xy[:, 0] + 180) % 360) - 180, diam], 1).astype(np.float32)
-    np.save(OUT + '/craters.npy', a); print('craters', a.shape)
+    """Robbins craters of 1 km or more, cut into 10° tiles so the browser loads only the ones a box touches.
+    Source: the USGS release (a zip holding one CSV), saved as data/tav/crater-database/*.zip, from
+    https://astrogeology.usgs.gov/search/map/Moon/Research/Craters/lunar_crater_database_robbins_2018
+    Each tile craters/<south>_<west>.bin is float32 little-endian [lat, lon (−180…180), diameter_km] per crater,
+    largest first (ties by lat, then lon); craters/index.json lists the tiles and their counts."""
+    import io, zipfile
+    with zipfile.ZipFile(glob.glob(D + '/crater-database/*.zip')[0]) as z:
+        name = next(n for n in z.namelist() if os.path.basename(n).startswith('lunar_crater_database') and n.endswith('.csv'))
+        with io.TextIOWrapper(z.open(name), 'utf-8') as f:
+            r = csv.reader(f); h = next(r); i, j, k = h.index('LAT_CIRC_IMG'), h.index('LON_CIRC_IMG'), h.index('DIAM_CIRC_IMG')
+            a = np.array([(float(x[i]), float(x[j]), float(x[k])) for x in r], np.float64)
+    a[:, 1] = (a[:, 1] + 180) % 360 - 180; a = a.astype(np.float32)
+    d = CRATER_DEG; south = np.clip(np.floor(a[:, 0] / d) * d, -90, 90 - d).astype(int); west = np.clip(np.floor(a[:, 1] / d) * d, -180, 180 - d).astype(int)
+    out = os.path.join(OUT, 'craters'); os.makedirs(out, exist_ok=True)
+    for f in glob.glob(out + '/*.bin'): os.remove(f)
+    tiles = {}
+    for s, w in sorted(set(zip(south.tolist(), west.tolist()))):
+        t = a[(south == s) & (west == w)]; t = t[np.lexsort((t[:, 1], t[:, 0], -t[:, 2]))]
+        t.astype('<f4').tofile(os.path.join(out, f'{s}_{w}.bin')); tiles[f'{s}_{w}'] = len(t)
+    json.dump(dict(deg=d, record=['lat', 'lon', 'diameter_km'], dtype='float32 little-endian', order='largest first',
+                   count=len(a), tiles=tiles, source='Robbins (2019) lunar crater database, craters of 1 km or more, USGS release 2018'),
+              open(os.path.join(out, 'index.json'), 'w'), separators=(',', ':'))
+    print('craters', len(a), 'in', len(tiles), 'tiles')
 
 
 def geology():
@@ -114,6 +129,5 @@ def lrs():
 
 
 if __name__ == '__main__':
-    if '--lrs' in sys.argv: lrs()
-    else:
-        for f in (names, pits, xenarch, craters, geology): f()
+    steps = dict(names=names, pits=pits, xenarch=xenarch, craters=craters, geology=geology, lrs=lrs)
+    for a in [a.lstrip('-') for a in sys.argv[1:]] or ['names', 'pits', 'xenarch', 'craters', 'geology']: steps[a]()

@@ -462,7 +462,7 @@
   $('q').addEventListener('input', function () {
     var q = this.value.trim().toLowerCase(), ul = $('results');
     if (q.length < 2) { ul.hidden = true; return; }
-    (names ? Promise.resolve(names) : fetch('/index/names.json').then(function (r) { return r.json(); }).then(function (n) { names = n; return n; })).then(function (n) {
+    (names ? Promise.resolve(names) : fetch('index/names.json').then(function (r) { return r.json(); }).then(function (n) { names = n; return n; })).then(function (n) {
       var hit = n.filter(function (x) { return x[0].toLowerCase().indexOf(q) === 0; }).concat(n.filter(function (x) { return x[0].toLowerCase().indexOf(q) > 0; })).slice(0, 8);
       ul.innerHTML = ''; ul.hidden = !hit.length;
       hit.forEach(function (x) {
