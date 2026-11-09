@@ -1,0 +1,9 @@
+# Tav, web version, on the Cloudflare Workers free plan:  npx wrangler dev  (local)  ·  npx wrangler deploy
+# site/ is served as static assets (free and unlimited); worker/index.js runs only for /proxy (100,000 requests a day free).
+name = "tav"
+main = "worker/index.js"
+compatibility_date = "2026-10-01"
+
+[assets]
+directory = "./site"
+run_worker_first = ["/proxy"]

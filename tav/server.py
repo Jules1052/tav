@@ -252,6 +252,17 @@ def write_glb(path, height, tex_jpg, w_m, h_m):
         f.write(struct.pack('<I4s', len(js), b'JSON') + js + struct.pack('<I4s', len(body), b'BIN\0') + body)
 
 
+def polygon_mask(ring, d, w, h):
+    """Cells of a (h, w) grid with bounds d whose centre is inside the ring (even-odd rule). The web version
+    (site/tav-web.js, polygonMask) does exactly the same arithmetic, so both cut a polygon capture alike."""
+    pts = [((lo - d['w']) / (d['e'] - d['w']) * w, (d['n'] - la) / (d['n'] - d['s']) * h) for la, lo in ring]; m = np.zeros((h, w), bool)
+    for y in range(h):
+        yc = y + 0.5
+        xs = sorted(x1 + (yc - y1) * (x2 - x1) / (y2 - y1) for (x1, y1), (x2, y2) in zip(pts, pts[1:] + pts[:1]) if (y1 > yc) != (y2 > yc))
+        for a, b in zip(xs[0::2], xs[1::2]): m[y, max(0, math.ceil(a - 0.5)):max(0, min(w, math.ceil(b - 0.5)))] = True
+    return m
+
+
 def in_ring(lat, lon, ring):
     lat, lon = np.asarray(lat, float), np.asarray(lon, float); c = np.zeros(lat.shape, bool)
     for (y1, x1), (y2, x2) in zip(ring, ring[1:] + ring[:1]):
@@ -356,9 +367,8 @@ class Capture:
     def mask(self, d):
         self._inside = d['arr'].size
         if self.m['shape'] != 'polygon': return d['arr']
-        h, w = d['arr'].shape; im = Image.new('L', (w, h), 0)
-        ImageDraw.Draw(im).polygon([((lo - d['w']) / (d['e'] - d['w']) * w, (d['n'] - la) / (d['n'] - d['s']) * h) for la, lo in self.ring], fill=1)
-        a = d['arr'].copy(); a[np.array(im) == 0] = np.nan; self._inside = max(1, int(np.array(im).sum())); return a
+        inside = polygon_mask(self.ring, d, *d['arr'].shape[::-1])
+        a = d['arr'].copy(); a[~inside] = np.nan; self._inside = max(1, int(inside.sum())); return a
 
     # -- steps
     def imagery(self):

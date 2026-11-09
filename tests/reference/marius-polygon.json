@@ -1186,8 +1186,8 @@
     "native_m_px": 59.2,
     "coverage_pct": 100.0,
     "min": -1648.187,
-    "max": -1401.529,
-    "mean": -1525.806
+    "max": -1402.921,
+    "mean": -1525.992
    },
    "thermal_night": {
     "file": "thermal_night.tif",
@@ -1221,7 +1221,7 @@
     "coverage_pct": 100.0,
     "min": 97.654,
     "max": 123.12,
-    "mean": 101.223
+    "mean": 101.201
    },
    "gravity": {
     "file": "gravity.tif",
@@ -1253,9 +1253,9 @@
     "m_px": 1895.2,
     "native_m_px": 1895.2,
     "coverage_pct": 100.0,
-    "min": 13.934,
-    "max": 33.196,
-    "mean": 18.918
+    "min": 13.861,
+    "max": 26.742,
+    "mean": 18.118
    },
    "radar_cpr": {
     "file": "radar_cpr.tif",
@@ -1286,7 +1286,7 @@
     ],
     "m_px": 236.9,
     "native_m_px": 236.9,
-    "coverage_pct": 55.9,
+    "coverage_pct": 56.0,
     "min": 0.105,
     "max": 3.876,
     "mean": 0.702
