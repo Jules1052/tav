@@ -5,12 +5,22 @@
  */
 
 /* 1 · Tokens and sheet ------------------------------------------------------- */
+/* Self-contained: this page does not load style.css. Its type (Poppins, JetBrains Mono) and the Tav night inks,
+ * which the Tav card and the Moon's looks in aleph-tav.js read, are kept here. */
+:root { --bg: #000; --ink: #f6f7ff; --ink-2: #c6c9dc; --muted: #9094ad;
+  --blue: #5b8cff; --violet: #a98bff; --pink: #ff5fb8; --green: #3dffc0;
+  --font: Poppins, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 23.4px/1.6 var(--font); }
+h2 { margin: 0; font: 500 37.7px/1.2 var(--font); }
+figure { margin: 0; min-width: 0; }
+.label { font: 500 19.5px/1.45 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 :root { --cream: #f8f1e5; --cream-2: #ece2cf; --ink-a: #24211e; --ink-a2: #4d463d; --line-a: #34302b; --red: #ff4938; --navy: #1f1513;
   --globe-land: #e1dacf; --globe-sea: #cfc5b5; }    /* the paper maps on the globes: a shade darker than the sheet */
 html:has(body.duo) { height: 100%; overflow: hidden; color-scheme: light; }
 body.duo { height: 100%; overflow: hidden; color: var(--ink-a);
   background: var(--cream); }
-body.duo::before { display: none; }                 /* style.css draws its own lines on every page; here .field draws them */
 .field { position: fixed; inset: 0; z-index: -2; display: block; width: 100%; height: 100%; }
 .defs { position: absolute; width: 0; height: 0; overflow: hidden; }
 

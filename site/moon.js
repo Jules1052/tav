@@ -1,7 +1,7 @@
 /* Interactive Moon globe (home page). WebGL2, no library.
  * Relief: LRO LOLA elevation (img/moon-elevation.jpg). Minerals: Lunar Prospector iron and thorium maps,
  * read back from their rainbow scale (blue = low, red = high). All maps are centred on 0° longitude.
- * Colours come from the page's CSS inks, so the globe follows the inks in style.css. */
+ * Colours come from the --globe-* tokens in style.css. */
 (() => {
   const fig = document.querySelector('.globe');
   if (!fig) return;
@@ -36,7 +36,7 @@
   precision highp float;
   in vec2 vUV; in vec3 vN;
   uniform sampler2D uH, uFe, uTh;
-  uniform vec3 uA, uB, uC, uR0, uR1, uR2, uR3, uLine; uniform float uMode;
+  uniform vec3 uA, uB, uC, uR0, uR1, uR2, uR3; uniform float uMode;
   out vec4 o;
   // Lunar Prospector maps are rainbow-coded: recover 0 (blue) .. 1 (red) from the hue.
   float val(sampler2D t) {
@@ -59,9 +59,6 @@
     vec3 col = mix(mineral, ramp, uMode);
     col *= mix(.8, 1.12, smoothstep(.1, .7, h));                   // higher ground is lighter
     col *= clamp(1. + 7. * (hx + hy), .5, 1.4);                    // relief shading, light from the north-west
-    float c = h * 22., w = fwidth(c);
-    float line = (1. - smoothstep(0., 1.3 * w, abs(fract(c) - .5))) * (1. - smoothstep(.25, .6, w));
-    col = mix(col, uLine, line * .28);                             // contour lines
     col *= mix(.55, 1., pow(max(vN.z, 0.), .55));                  // limb darkening
     o = vec4(col, 1.);
   }`;
@@ -99,15 +96,12 @@
   });
   gl.uniform1i(U('uH'), 0); gl.uniform1i(U('uFe'), 1); gl.uniform1i(U('uTh'), 2); gl.uniform1f(U('uK'), K);
 
-  // Colours from the CSS inks
+  // Colours from the --globe-* tokens: highlands, maria, KREEP, then the four stops of the altitude ramp
   const probe = document.createElement('i'); probe.hidden = true; fig.append(probe);
-  const ink = name => { probe.style.color = `var(--${name})`; return getComputedStyle(probe).color.match(/[\d.]+/g).slice(0, 3).map(v => v / 255); };
-  const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+  const ink = name => { probe.style.color = `var(--globe-${name})`; return getComputedStyle(probe).color.match(/[\d.]+/g).slice(0, 3).map(v => v / 255); };
   function colours() {
-    const bg = ink('bg'), blue = ink('blue'), violet = ink('violet'), pink = ink('pink'), green = ink('green');
-    gl.uniform3fv(U('uA'), mix(bg, blue, .5)); gl.uniform3fv(U('uB'), violet); gl.uniform3fv(U('uC'), pink);
-    gl.uniform3fv(U('uR0'), green); gl.uniform3fv(U('uR1'), blue); gl.uniform3fv(U('uR2'), violet); gl.uniform3fv(U('uR3'), pink);
-    gl.uniform3fv(U('uLine'), ink('ink'));
+    gl.uniform3fv(U('uA'), ink('high')); gl.uniform3fv(U('uB'), ink('mare')); gl.uniform3fv(U('uC'), ink('kreep'));
+    [0, 1, 2, 3].forEach(i => gl.uniform3fv(U('uR' + i), ink('r' + i)));
   }
 
   // View: the point (lon0, lat0) faces the viewer

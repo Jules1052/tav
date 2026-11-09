@@ -4,86 +4,107 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tav ת</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%23000%27/%3E%3Ctext x=%2716%27 y=%2725%27 font-size=%2726%27 text-anchor=%27middle%27 fill=%27%23a98bff%27 font-family=%27Arial Hebrew,Arial,sans-serif%27%3E%D7%AA%3C/text%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Poppins:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="style.css?v=21">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7.5' fill='%231B1B19' stroke='%23F3EAD9'/%3E%3Ccircle cx='6.2' cy='9.6' r='3.4' fill='none' stroke='%23F3EAD9' stroke-width='.8'/%3E%3Cpath d='M9.6 .8c.9 2.6-1.4 3.8-.5 6.4s1.6 3.9.6 8.4' stroke='%23A98BFF' stroke-width='1.9' fill='none'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css?v=22">
 </head>
 <body>
-<nav>
+<nav class="top">
   <div class="wrap">
-    <a class="brand" href="index.html"><span class="glyph" lang="he" aria-hidden="true">ת</span>Tav</a>
+    <a class="brand" href="index.html"><img class="logo" src="img/logo.svg" width="32" height="32" alt=""><span><b>Tav <span lang="he" aria-hidden="true">ת</span></b><small>Everything about a place on the Moon</small></span></a>
+    <div class="links">
+      <a class="label" href="#map">The map</a>
+      <a class="label" href="#studies">Studies</a>
+      <a class="label" href="aleph-tav.html">Aleph · Tav</a>
+    </div>
+    <a class="btn primary" href="tav-app.html">Open the map</a>
   </div>
 </nav>
 
 <main class="wrap">
   <div class="home">
     <section class="intro">
+      <span class="label eyebrow">Download a piece of the Moon</span>
       <h1>Not Plato’s cave</h1>
       <p class="lede">Tav gives satellite imagery, terrain data, caves, minerals and on-site photos of the Moon to your LLM.</p>
-      <p class="lede">Cousin of <a href="https://github.com/Belluxx/Aleph">Aleph</a>.</p>
-      <blockquote class="quote">
-        <p>“Unable to resist my eager desire … and having wandered some distance among gloomy rocks, I came to the entrance of a great cavern, in front of which I stood some time, astonished … and after having remained there some time, two contrary emotions arose in me, fear and desire—fear of the threatening dark cavern, desire to see whether there were any marvellous thing within it.”</p>
-        <footer class="label">Leonardo da Vinci · Notebooks · trans. J. P. Richter, 1883</footer>
-      </blockquote>
+      <p class="cousin">Cousin of <a href="https://github.com/Belluxx/Aleph">Aleph</a>, which does the same for the Earth.</p>
+      <div class="cta">
+        <a class="btn accent big" href="tav-app.html">Open the map</a>
+        <a class="btn big" href="https://github.com/Jules1052/tav">Source on GitHub ↗</a>
+      </div>
     </section>
 
-    <figure class="panel globe">
+    <figure class="globe">
       <div class="stage" tabindex="0" aria-label="Globe of the Moon. Drag or use the arrow keys to turn it.">
         <canvas role="img" aria-label="3D globe of the Moon with exaggerated relief, coloured by mineral type, with known pits marked"></canvas>
         <img class="fallback" src="img/thorium.jpg" alt="Thorium map of the Moon, two hemispheres">
-      </div>
-      <div class="tools">
         <div class="modes" role="group" aria-label="Colour the Moon by">
           <button type="button" data-mode="0" aria-pressed="true">Minerals</button><button type="button" data-mode="1" aria-pressed="false">Altitude</button>
         </div>
+        <span class="label drag" aria-hidden="true">Drag to turn</span>
       </div>
       <div class="legend"></div>
       <div class="chips" role="group" aria-label="Go to a site"></div>
       <div class="info" aria-live="polite"></div>
-      <figcaption class="label">Drag to turn · relief exaggerated · elevation LRO LOLA · iron and thorium Lunar Prospector · NASA</figcaption>
+      <figcaption class="label">Relief exaggerated · elevation LRO LOLA · iron and thorium Lunar Prospector · NASA</figcaption>
     </figure>
+
+    <blockquote class="quote">
+      <p>“Unable to resist my eager desire … and having wandered some distance among gloomy rocks, I came to the entrance of a great cavern, in front of which I stood some time, astonished … and after having remained there some time, two contrary emotions arose in me, fear and desire—fear of the threatening dark cavern, desire to see whether there were any marvellous thing within it.”</p>
+      <footer class="label">Leonardo da Vinci · Notebooks · trans. J. P. Richter, 1883</footer>
+    </blockquote>
   </div>
 
-  <section id="tool">
-    <div class="head center"><h2>Tool</h2></div>
-    <div class="tiles one">
-      <a class="tile" href="tav-app.html">
-        <img src="img/tav/nac.jpg" width="480" height="480" alt="">
-        <span class="label"><span>Tool</span></span>
-        <b>Tav, the map</b>
-        <span class="name">Tav <span lang="he">ת</span></span>
-        <p>Draw a box on the Moon and download every layer inside it, in your browser. Run <code>./start.sh</code> for the full version.</p>
-      </a>
+  <section id="map">
+    <div class="head"><h2>The map</h2><span class="label">in your browser · or local with ./start.sh</span></div>
+    <ol class="steps">
+      <li><span class="label"><i>1</i>Draw</span><p>Draw a rectangle or a polygon anywhere on the Moon, or search a place by name.</p></li>
+      <li><span class="label"><i>2</i>Choose</span><p>Pick the layers and the detail: 512, 1,024 or 2,048 pixels on the longest side.</p></li>
+      <li><span class="label"><i>3</i>Result</span><p>Show or hide each layer, click a point to see its picture, turn the 3D mesh, save the capture as a .zip.</p></li>
+    </ol>
+
+    <span class="label sub mt">What a capture holds</span>
+    <ul class="layers">
+      <li><img src="img/tav/wac.jpg" width="480" height="480" loading="lazy" alt=""><div><b>Imagery</b><small>LROC WAC mosaic · 100 m per pixel</small></div></li>
+      <li><img src="img/tav/sldem.jpg" width="480" height="480" loading="lazy" alt=""><div><b>Elevation and a textured 3D mesh</b><small>SLDEM2015 · LOLA near the poles</small></div></li>
+      <li><img src="img/tav/tc.jpg" width="480" height="480" loading="lazy" alt=""><div><b>Sharper image and elevation</b><small>Kaguya Terrain Camera · 7.4 m per pixel</small></div></li>
+      <li><img src="img/tav/diviner.jpg" width="480" height="480" loading="lazy" alt=""><div><b>Night temperature</b><small>LRO Diviner · surface at midnight</small></div></li>
+      <li><img src="img/tav/grail.jpg" width="480" height="480" loading="lazy" alt=""><div><b>Gravity</b><small>GRAIL · free-air anomaly</small></div></li>
+      <li><img src="img/tav/minirf.jpg" width="480" height="480" loading="lazy" alt=""><div><b>Radar</b><small>Mini-RF · circular polarisation ratio</small></div></li>
+      <li><img src="img/tav/vector.jpg" width="480" height="480" loading="lazy" alt=""><div><b>Pits, craters, names, geology</b><small>Pit Atlas · Robbins · Gazetteer · USGS</small></div></li>
+      <li><img src="img/tav/mi.jpg" width="480" height="480" loading="lazy" alt=""><div><b>Every archive product in the box</b><small>NAC · stereo DTMs · Kaguya TC and MI · M³</small></div></li>
+      <li><img src="img/tav/nac.jpg" width="480" height="480" loading="lazy" alt=""><div><b>A picture for each point</b><small>NAC frames · radar tracks · Xenarch crops</small></div></li>
+    </ul>
+    <p class="note">The web version builds each capture in your browser. The 7 m Kaguya layers, full archive files, radar and Xenarch pictures and the API for agents need the local version: run <code>./start.sh</code> in the project folder.</p>
+    <div class="run">
+      <a class="btn accent big" href="tav-app.html">Open the map</a>
+      <p>No API keys. Tav has no AI inside: it only collects data.</p>
     </div>
   </section>
 
   <section id="studies">
-    <div class="head center"><h2>Studies</h2></div>
-    <div class="tiles">
-      <a class="tile" href="mapping.html">
-        <img src="img/thorium.jpg" width="1280" height="670" alt="">
-        <span class="label"><span>01</span></span>
+    <div class="head"><h2>Studies</h2><span class="label">the notes behind the tool</span></div>
+    <div class="studies">
+      <a class="study" href="mapping.html">
+        <img src="img/thorium.jpg" width="1280" height="670" loading="lazy" alt="">
+        <span class="label"><i>01</i>Survey log</span>
         <b>Mapping the Moon’s minerals and caves (physically)</b>
         <p>Every method used so far, and the result each one gave.</p>
       </a>
-      <a class="tile" href="software.html">
-        <img src="img/m3-water.jpg" width="960" height="960" alt="">
-        <span class="label"><span>02</span></span>
+      <a class="study" href="software.html">
+        <img src="img/m3-water.jpg" width="960" height="960" loading="lazy" alt="">
+        <span class="label"><i>02</i>Toolbox</span>
         <b>Mapping the Moon’s minerals and caves (software)</b>
         <p>The programs behind the maps, with animations of how they work.</p>
       </a>
-      <a class="tile" href="tav.html">
-        <img src="img/marius-pit.png" alt="">
-        <span class="label"><span>03</span></span>
+      <a class="study" href="tav.html">
+        <img src="img/marius-pit.png" width="800" height="800" loading="lazy" alt="">
+        <span class="label"><i>03</i>Build plan</span>
         <b>Aleph for the Moon</b>
-        <span class="name">Tav <span lang="he">ת</span></span>
         <p>A tool that downloads everything known about a place on the Moon, for an agent to look at.</p>
       </a>
-      <a class="tile" href="detection.html">
-        <img src="img/ingenii-pit.png" alt="">
-        <span class="label"><span>04</span></span>
+      <a class="study" href="detection.html">
+        <img src="img/ingenii-pit.png" width="960" height="960" loading="lazy" alt="">
+        <span class="label"><i>04</i>Cave scan</span>
         <b>Detecting caves through agents</b>
         <p>Feed an agent data through Tav and propose new cave candidates.</p>
       </a>
@@ -98,8 +119,6 @@
   </div>
 </footer>
 
-<script src="moon.js"></script>
-<script src="contours.js"></script>
-<script src="rover.js?v=3"></script>
+<script src="moon.js?v=2"></script>
 </body>
 </html>
