@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tav · Aleph for the Moon.
+"""Tav, Aleph for the Moon.
 
 Serves the site and the Tav API on http://127.0.0.1:8060 (PORT=… to change).
 Draw a box on the map and Tav collects every lunar layer inside it into
@@ -181,18 +181,18 @@ def _sldem(ti, tj):
 
 
 RASTERS = [
-    Raster('elevation', 'Elevation · SLDEM', 'm', 512, 60, -60, 0, '<f4', 1000.0, tiles=(15360, 23040, _sldem),
+    Raster('elevation', 'Elevation (SLDEM)', 'm', 512, 60, -60, 0, '<f4', 1000.0, tiles=(15360, 23040, _sldem),
            valid=lambda a: np.abs(a) < 50, source='SLDEM2015, LOLA + Kaguya, 59 m per pixel'),
-    Raster('elevation_lola', 'Elevation · LOLA', 'm', 64, 90, -90, 0, '<i2', 0.5,
+    Raster('elevation_lola', 'Elevation (LOLA)', 'm', 64, 90, -90, 0, '<i2', 0.5,
            url=f'{GEO}/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_64.img',
            local=os.path.join(DATA, 'lola', 'ldem_64.img'), source='LOLA LDEM 64 px/deg, 474 m per pixel'),
-    Raster('thermal_night', 'Night temperature · Diviner', 'K', 128, 70, -70, 0, '<f4',
+    Raster('thermal_night', 'Night temperature (Diviner)', 'K', 128, 70, -70, 0, '<f4',
            url=f'{GEO}/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_ghrm/img/dghrm_tbol_m_70s70n_img.img',
            valid=lambda a: (a > 20) & (a < 500), source='Diviner global mosaic, bolometric temperature at midnight, 237 m per pixel'),
-    Raster('gravity', 'Gravity · GRAIL', 'mGal', 16, 90, -90, 0, '<f4',
+    Raster('gravity', 'Gravity (GRAIL)', 'mGal', 16, 90, -90, 0, '<f4',
            url=f'{GEO}/grail/grail-l-lgrs-5-rdr-v1/grail_1001/rsdmap/gggrx_1200a_anom_l660.img',
            local=os.path.join(DATA, 'grail', 'gggrx_1200a_anom_l660.img'), source='GRAIL GRGM1200A free-air anomaly to degree 660, 1.9 km per pixel'),
-    Raster('radar_cpr', 'Radar polarisation · Mini-RF', 'ratio', 128, 90, -90, -180, '<f4',
+    Raster('radar_cpr', 'Radar polarisation (Mini-RF)', 'ratio', 128, 90, -90, -180, '<f4',
            url=f'{GEO}/lro/lro-l-mrflro-5-global-mosaic-v1/lromrf_1001/data/128ppd/global_cpr_128ppd_simp_0c.img',
            valid=lambda a: (a > 0) & (a < 50), source='Mini-RF global mosaic, circular polarisation ratio, 237 m per pixel'),
 ]
@@ -405,7 +405,7 @@ class Capture:
         im = mos.crop(box)
         if max(im.size) < 1024: im = im.resize((max(1, im.size[0] * 1024 // max(im.size)), max(1, im.size[1] * 1024 // max(im.size))), Image.LANCZOS)
         im.save(os.path.join(self.dir, 'wac.jpg'), quality=90)
-        self.m['layers'].append(dict(key='imagery', title='Imagery · LROC WAC', file='wac.jpg', preview='wac.jpg', bounds=[[self.s, self.w], [self.n, self.e]],
+        self.m['layers'].append(dict(key='imagery', title='Imagery (LROC WAC)', file='wac.jpg', preview='wac.jpg', bounds=[[self.s, self.w], [self.n, self.e]],
                                      m_px=round(KM_DEG * 1000 / ppd), source=f'LROC WAC global mosaic via NASA Moon Trek, zoom {z}', px=list(im.size)))
 
     def raster(self, r):
@@ -489,7 +489,7 @@ class Capture:
     def kaguya(self):
         """Kaguya Terrain Camera at 7.4 m, from tiles already on disk (JAXA serves whole 302 MB tiles only)."""
         made = {}
-        for typ, key, title, dt, nod, unit in (('TCORT', 'imagery_tc', 'Imagery · Kaguya TC', '>u2', 0, 'DN'), ('TCDTMM', 'elevation_tc', 'Elevation · Kaguya TC', '>i2', -9999, 'm')):
+        for typ, key, title, dt, nod, unit in (('TCORT', 'imagery_tc', 'Imagery (Kaguya TC)', '>u2', 0, 'DN'), ('TCDTMM', 'elevation_tc', 'Elevation (Kaguya TC)', '>i2', -9999, 'm')):
             items = products(self.dir, typ)
             if not items: continue
             ppd = 4096; rows, cols = int(math.ceil((self.n - self.s) * ppd)), int(math.ceil((self.e - self.w) * ppd)); k = max(1, int(math.ceil(max(rows, cols) / (1.5 * self.max_px))))
@@ -583,7 +583,7 @@ def plan(ring):
     for key, r in (('elevation', elevation_raster(s, n)), ('thermal_night', RASTERS[2]), ('gravity', RASTERS[3]), ('radar_cpr', RASTERS[4])):
         ok = min(n, r.lat_top) > max(s, r.lat_bot)
         out['layers'][key] = dict(title=r.title, m_px=round(KM_DEG * 1000 / r.ppd, 1), px=[int((e - w) * r.ppd) + 1, int((n - s) * r.ppd) + 1], available=ok, source=r.source)
-    out['layers']['imagery'] = dict(title='Imagery · LROC WAC', m_px=83, px=[int((e - w) * 364) + 1, int((n - s) * 364) + 1], available=True, source='LROC WAC global mosaic, NASA Moon Trek')
+    out['layers']['imagery'] = dict(title='Imagery (LROC WAC)', m_px=83, px=[int((e - w) * 364) + 1, int((n - s) * 364) + 1], available=True, source='LROC WAC global mosaic, NASA Moon Trek')
     tiles = [(top, west) for top in range(int(math.floor(s / 3)) * 3 + 3, int(math.ceil(n / 3)) * 3 + 1, 3) for west in range(int(math.floor((w % 360) / 3)) * 3, int(math.ceil((w % 360 + (e - w)) / 3)) * 3, 3)]
     have = 0
     for top, west in tiles:
@@ -743,5 +743,5 @@ class Handler(SimpleHTTPRequestHandler):
 
 if __name__ == '__main__':
     os.makedirs(CAPS, exist_ok=True); port = int(os.environ.get('PORT', '8060'))
-    print(f'Tav · http://127.0.0.1:{port}/tav-app.html  (captures in {CAPS})', flush=True)
+    print(f'Tav: http://127.0.0.1:{port}/tav-app.html  (captures in {CAPS})', flush=True)
     ThreadingHTTPServer(('127.0.0.1', port), Handler).serve_forever()

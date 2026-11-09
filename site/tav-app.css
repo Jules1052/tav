@@ -1,11 +1,11 @@
-/* Tav app · night paper
+/* Tav app: night paper
  * Aleph's dashboard, inked for the Moon: one panel docked on the left and ruled in cream ink, the map beside it,
  * square corners, system type, mono labels. The colours are the Tav banner's: night paper, cream ink, a violet river.
  * Violet is the only accent: the main action, what is switched on, progress and focus.
  * Self-contained: this page does not load style.css.
  */
 
-/* 1 · Tokens and base ------------------------------------------------------------- */
+/* 1. Tokens and base ------------------------------------------------------------- */
 :root {
   color-scheme: dark;
   --paper: #1b1b19;     /* the banner's night paper: panel and everything that floats on the map */
@@ -38,7 +38,7 @@ code { font: 12px/1.4 var(--mono); }
 .eyebrow { display: block; font: 500 10.5px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .eyebrow.mt, details.mt { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
 
-/* 2 · Map: it starts where the panel ends ------------------------------------------- */
+/* 2. Map: it starts where the panel ends ------------------------------------------- */
 #stage { position: absolute; top: 0; right: 0; bottom: 0; left: var(--pw); }
 #map { position: absolute; inset: 0; background: var(--void); }
 .leaflet-container { background: var(--void); font: 12px var(--mono); }
@@ -84,7 +84,7 @@ code { font: 12px/1.4 var(--mono); }
   font: 11px var(--mono); font-variant-numeric: tabular-nums; white-space: pre; pointer-events: none; }
 #coords:empty { display: none; }
 
-/* 3 · Panel ------------------------------------------------------------------------ */
+/* 3. Panel ------------------------------------------------------------------------ */
 #side { position: absolute; z-index: 900; left: 0; top: 0; bottom: 0; width: var(--pw); overflow-y: auto; overscroll-behavior: contain;
   background: var(--paper); border-right: 1px solid var(--ink); scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 #side header { position: sticky; top: 0; z-index: 3; background: var(--paper); border-bottom: 1px solid var(--ink); }
@@ -121,7 +121,7 @@ code { font: 12px/1.4 var(--mono); }
 #side .warn { padding: 10px 12px; border: 1px solid var(--alert); background: color-mix(in srgb, var(--alert) 7%, var(--paper)); font-size: 13px; line-height: 1.5; }
 #side code { padding: 1px 4px; border: 1px solid var(--line); background: var(--surface); font-size: 11.5px; }
 
-/* 4 · Buttons: outlined in ink, filled in ink when pointed at. Violet marks the one main action ------------- */
+/* 4. Buttons: outlined in ink, filled in ink when pointed at. Violet marks the one main action ------------- */
 .tavapp button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin: 0; padding: 9px 14px; border: 1px solid var(--ink); border-radius: 0;
   background: transparent; color: var(--ink); font: 500 13px/1.2 var(--sans); cursor: pointer; transition: background .12s, color .12s, border-color .12s; }
 .tavapp button:hover { background: var(--ink); color: var(--paper); }
@@ -155,7 +155,7 @@ code { font: 12px/1.4 var(--mono); }
 .tavapp .seg button.on, .tavapp .seg button.on:hover { position: relative; z-index: 1; border-color: var(--ink); background: var(--ink); color: var(--paper); }
 .seg button.on small { color: color-mix(in srgb, var(--paper) 62%, var(--ink)); }
 
-/* 5 · Lists: one ruled row per layer, picture or icon on the left, a switch on the right ------------------ */
+/* 5. Lists: one ruled row per layer, picture or icon on the left, a switch on the right ------------------ */
 .list { list-style: none; margin: 8px 0 0; padding: 0; }
 .list > li { color: var(--ink-2); }
 .list > li.muted { padding: 8px 0; color: var(--muted); font-size: 13px; }
@@ -191,7 +191,7 @@ input.sw:focus-visible { outline-offset: 2px; }
 .cap:hover::after, .cap:focus-visible::after { opacity: 1; transform: none; }
 .cap:focus-visible { outline-offset: -2px; }
 
-/* 6 · Result ----------------------------------------------------------------------- */
+/* 6. Result ----------------------------------------------------------------------- */
 .chip { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font: 500 10.5px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
 .chip::before { content: ""; width: 7px; height: 7px; background: var(--ink-2); }
 .chip.run { color: var(--accent); }
@@ -223,7 +223,7 @@ details.files summary:hover .eyebrow, details.files summary:hover::after { color
 .path button { flex: none; padding: 4px 9px; font-size: 12px; }
 .notes { margin: 14px 0 0; padding-left: 16px; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
 
-/* 7 · Point viewer: a ruled card over the map, picture left, text right ------------------ */
+/* 7. Point viewer: a ruled card over the map, picture left, text right ------------------ */
 #viewer { position: absolute; z-index: 850; right: var(--gap); bottom: 36px; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
   width: min(820px, calc(100% - var(--gap) * 2)); max-height: calc(100% - 100px); overflow: auto; border: 1px solid var(--ink); background: var(--paper); }
 #viewer .pic { display: grid; place-items: center; min-height: 240px; border-right: 1px solid var(--line); background: #000; }
@@ -236,7 +236,7 @@ details.files summary:hover .eyebrow, details.files summary:hover::after { color
 #viewer .tools { gap: 6px; }
 #viewer .tools button { padding: 5px 10px; font-size: 12px; }
 
-/* 8 · 3D: the mesh fills the map, one ruled bar of controls on top --------------------------- */
+/* 8. 3D: the mesh fills the map, one ruled bar of controls on top --------------------------- */
 #three { position: absolute; inset: 0; z-index: 820; background: #141412; }
 #t-canvas { position: absolute; inset: 0; }
 #three .bar { position: absolute; left: var(--gap); right: var(--gap); top: var(--gap); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px;
@@ -252,7 +252,7 @@ details.files summary:hover .eyebrow, details.files summary:hover::after { color
 #three input[type=range]::-webkit-slider-thumb { width: 10px; height: 16px; margin-top: -7.5px; border: 0; background: var(--accent); -webkit-appearance: none; }
 #three input[type=range]::-moz-range-thumb { width: 10px; height: 16px; border: 0; border-radius: 0; background: var(--accent); }
 
-/* 9 · Narrow windows: the panel becomes a sheet under the map, as in Aleph ----------------- */
+/* 9. Narrow windows: the panel becomes a sheet under the map, as in Aleph ----------------- */
 @media (max-width: 860px) {
   :root { --gap: 12px; }
   #side { left: 0; right: 0; top: auto; bottom: 0; width: auto; height: 52vh; height: 52dvh; border-right: 0; border-top: 1px solid var(--ink); }

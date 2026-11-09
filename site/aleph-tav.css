@@ -1,10 +1,10 @@
-/* Aleph · Tav (aleph-tav.html): one cream sheet.
+/* Aleph + Tav (aleph-tav.html): one cream sheet.
  * Everything sits on a design frame of 1440 × 860 (420 × 900 on a tall screen) that is scaled to fit the window:
  * --u is one design pixel, so the page fills any screen without scrolling.
  * The background (cream and the Earth–Moon gravity lines) is drawn by aleph-tav.js on the .field canvas.
  */
 
-/* 1 · Tokens and sheet ------------------------------------------------------- */
+/* 1. Tokens and sheet ------------------------------------------------------- */
 /* Self-contained: this page does not load style.css. Its type (Poppins, JetBrains Mono) and the Tav night inks,
  * which the Tav card and the Moon's looks in aleph-tav.js read, are kept here. */
 :root { --bg: #000; --ink: #f6f7ff; --ink-2: #c6c9dc; --muted: #9094ad;
@@ -33,13 +33,13 @@ body.duo { height: 100%; overflow: hidden; color: var(--ink-a);
 .river.a path { stroke: var(--red); }
 .river.t path { stroke: var(--violet); filter: drop-shadow(0 0 8px color-mix(in srgb, var(--violet) 70%, transparent)); }
 
-/* 2 · Frame ------------------------------------------------------------------ */
+/* 2. Frame ------------------------------------------------------------------ */
 .frame { --W: 1440; --H: 860; --u: min(calc(100vw / var(--W)), calc(100vh / var(--H)));
   position: fixed; left: 50%; top: 50%; width: calc(var(--W) * var(--u)); height: calc(var(--H) * var(--u)); transform: translate(-50%, -50%); }
 @supports (height: 100dvh) { .frame { --u: min(calc(100vw / var(--W)), calc(100dvh / var(--H))); } }
 .frame > * { position: absolute; margin: 0; }
 
-/* 3 · The two letters at the top, the settings at the bottom centre ------------- */
+/* 3. The two letters at the top, the settings at the bottom centre ------------- */
 .mark { top: calc(12 * var(--u)); font: 600 calc(58 * var(--u))/1 "Arial Hebrew", "SF Hebrew", "Noto Sans Hebrew", Arial, sans-serif; text-decoration: none; }
 .mark.al { left: calc(34 * var(--u)); color: var(--red); }
 .mark.tv { right: calc(34 * var(--u)); color: var(--violet); text-shadow: 0 0 calc(18 * var(--u)) color-mix(in srgb, var(--violet) 70%, transparent); }
@@ -56,7 +56,7 @@ body.duo { height: 100%; overflow: hidden; color: var(--ink-a);
 .looks button[aria-pressed="true"] { color: var(--cream); background: var(--ink-a); border-color: var(--ink-a); }
 .looks button:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
 
-/* 4 · Claim ------------------------------------------------------------------ */
+/* 4. Claim ------------------------------------------------------------------ */
 .claim { top: calc(92 * var(--u)); left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(var(--W) * var(--u)); text-align: center; }
 .claim > * { margin: 0; }
 .claim h1 { font: 500 calc(60 * var(--u))/1.1 var(--font); letter-spacing: -.015em; color: var(--ink-a); }
@@ -71,7 +71,7 @@ body.duo { height: 100%; overflow: hidden; color: var(--ink-a);
 .al { color: var(--red); }
 .tv { color: var(--violet); text-shadow: 0 0 .5em color-mix(in srgb, var(--violet) 70%, transparent); }
 
-/* 5 · Globes: the Earth up on the left, the Moon down on the right ------------- */
+/* 5. Globes: the Earth up on the left, the Moon down on the right ------------- */
 .world { --x: 80; --y: 222; --s: 500; left: calc(var(--x) * var(--u)); top: calc(var(--y) * var(--u)); width: calc(var(--s) * var(--u));
   padding: 0; border: 0; background: none; }
 .world.moon { --x: 1055; --y: 440; --s: 195; }
@@ -98,7 +98,7 @@ body.duo { height: 100%; overflow: hidden; color: var(--ink-a);
 .world.nogl .stage { background: url(img/earth-color.jpg) center / auto 100%; }
 .world.moon.nogl .stage { background-image: url(img/moon-color.jpg); }
 
-/* 6 · Hint and cards, between the two globes ------------------------------------ */
+/* 6. Hint and cards, between the two globes ------------------------------------ */
 .hint { left: calc(430 * var(--u)); top: calc(400 * var(--u)); width: calc(700 * var(--u)); text-align: center;
   font: 400 max(15px, calc(21 * var(--u)))/1.4 var(--font); color: var(--ink-a2); transition: opacity .3s; }
 .hint .finger { display: none; }
@@ -135,10 +135,10 @@ body.duo { height: 100%; overflow: hidden; color: var(--ink-a);
 .card.tav .go a.main { color: #000; background: var(--violet); border-color: var(--violet); }
 .card.tav .go a:hover, .card.tav .go a:focus-visible { border-color: var(--violet); outline: none; box-shadow: 0 0 20px color-mix(in srgb, var(--violet) 70%, transparent); }
 
-/* 7 · Signature ------------------------------------------------------------------ */
+/* 7. Signature ------------------------------------------------------------------ */
 .made { left: calc(34 * var(--u)); bottom: calc(28 * var(--u)); font: 500 max(11px, calc(14 * var(--u)))/1.4 var(--mono); letter-spacing: .06em; color: #6b6257; }
 
-/* 8 · Tall screens (phones): a 420 × 900 frame, the card rises from the bottom ------ */
+/* 8. Tall screens (phones): a 420 × 900 frame, the card rises from the bottom ------ */
 @media (max-aspect-ratio: 1/1) {
   .frame { --W: 420; --H: 900; }
   .mark { top: calc(8 * var(--u)); font-size: calc(46 * var(--u)); }

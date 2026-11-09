@@ -113,7 +113,7 @@ def load(case):
 def report(case, fails, warns):
     print(f"{case:16s} {'FAIL' if fails else 'pass'}" + (f'  ({len(warns)} warning{"s" * (len(warns) != 1)})' if warns else ''))
     for x in fails: print('   ✗', x)
-    for x in warns: print('   ·', x)
+    for x in warns: print('   -', x)
     return not fails
 
 

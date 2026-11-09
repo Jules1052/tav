@@ -54,16 +54,16 @@ def main():
             t0 = time.time()
             while time.time() - t0 < ms / 1000: shot(every); pg.wait_for_timeout(every)
 
-        # 1 · the map, then search a place
+        # 1. the map, then search a place
         shot(1800)
         click('#q', hold=300)
         for ch in 'Marius': pg.keyboard.type(ch); shot(110)
         pg.wait_for_selector('#results li'); shot(900)
         exact = pg.locator('#results li').filter(has_text='Crater').first
-        click('#results li:has(small:text-is("Crater · 40.1 km"))' if exact.count() else '#results li', hold=400); pg.wait_for_timeout(2600); shot(1200)
+        click('#results li:has(small:text-is("Crater, 40.1 km"))' if exact.count() else '#results li', hold=400); pg.wait_for_timeout(2600); shot(1200)
         click('#zin', hold=700); pg.wait_for_timeout(700); shot(900)
 
-        # 2 · draw a rectangle
+        # 2. draw a rectangle
         m = pg.locator('#map').bounding_box(); mx, my = m['x'] + m['width'] / 2, m['y'] + m['height'] / 2
         click('#draw-rect', hold=600)
         x0, y0, x1, y1 = mx - 150, my - 105, mx + 150, my + 105
@@ -71,7 +71,7 @@ def main():
         move(x1, y1, steps=22, ms=45); pg.mouse.up(); down['v'] = False; pg.evaluate('([x,y,d])=>__cur(x,y,d)', [cx, cy, False])
         pg.wait_for_selector('#choose:not([hidden])'); pg.wait_for_selector('#c-layers li'); pg.wait_for_timeout(800); shot(1600)
 
-        # 3 · choose and download
+        # 3. choose and download
         click('#c-detail button[data-px="2048"]', hold=700)
         click('#capture', hold=400)
         pg.wait_for_selector('#detail:not([hidden])')
@@ -81,14 +81,14 @@ def main():
             if pg.evaluate("document.getElementById('d-prog').hidden") and pg.locator('#d-layers li').count() > 0: break
         pg.wait_for_timeout(800); shot(1500)
 
-        # 4 · toggle layers on the map
+        # 4. toggle layers on the map
         def toggle(text, hold=1300):
             cb = pg.locator('#d-layers li', has_text=text).first.locator('input')
             b = cb.bounding_box() if cb.count() else None
             if b: click(xy=(b['x'] + b['width'] / 2, b['y'] + b['height'] / 2), hold=hold)
         toggle('Elevation'); toggle('Elevation', 400); toggle('Night temperature'); toggle('Night temperature', 400); toggle('Gravity'); toggle('Gravity', 400)
 
-        # 5 · the 3D mesh
+        # 5. the 3D mesh
         if pg.locator('#d-3d-btn').is_visible():
             click('#d-3d-btn', hold=300)
             try:
@@ -98,7 +98,7 @@ def main():
                 shot(900); click('#t-close', hold=800)
             except Exception as e: print('3D skipped:', e)
 
-        # 6 · a point on the map
+        # 6. a point on the map
         pts = pg.locator('#map .pt')
         if pts.count():
             best = None

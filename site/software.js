@@ -81,7 +81,7 @@
     s.draw(t, 1 - prog(t, s.period - .7, s.period));          // second argument: fade-out before the loop restarts
   };
 
-  /* 1 · Unmixing: every pixel's spectrum is split into the minerals that make it up ---------- */
+  /* 1. Unmixing: every pixel's spectrum is split into the minerals that make it up ---------- */
   const MINERALS = [
     { name: 'Pyroxene', ink: 'pink', f: l => (.24 + .1 * (l - .5)) * (1 - .55 * gauss(l, .95, .13) - .42 * gauss(l, 2.05, .32)) },
     { name: 'Olivine', ink: 'green', f: l => (.22 + .12 * (l - .5)) * (1 - .55 * gauss(l, 1.05, .25)) },
@@ -101,7 +101,7 @@
     const a = cur.map((v, i) => prev[i] + (v - prev[i]) * p);
 
     // Image cube: grey until the pixel is processed, then the ink of its dominant mineral
-    label('Image cube · M³', 24, 56);
+    label('M³ image cube', 24, 56);
     for (let i = 0; i < total; i++) {
       const x = 24 + (i % N) * CELL, y = 70 + ((i / N) | 0) * CELL, m = mixOf(i);
       if (i < n || done) {
@@ -114,11 +114,11 @@
       stroke(c.line, 1); ctx.strokeRect(x + .5, y + .5, CELL, CELL);
     }
     if (!done) { stroke(c.accent, 2); ctx.strokeRect(24 + (n % N) * CELL, 70 + ((n / N) | 0) * CELL, CELL, CELL); }
-    label('Colour = top mineral', 24, 244);
+    label('Top mineral', 24, 244);
 
     // Spectrum of the current pixel (ink) and the three mineral spectra it is the sum of
     const px = l => 215 + (l - .5) / 2.5 * 170, py = r => 226 - r / .62 * 156;
-    label('Spectrum of this pixel', 215, 56);
+    label('Pixel spectrum', 215, 56);
     stroke(c.line, 1); seg(215, 70, 215, 226); seg(215, 226, 385, 226);
     const curve = f => { ctx.beginPath(); for (let l = .5; l <= 3.001; l += .025) ctx.lineTo(px(l), py(f(l))); ctx.stroke(); };
     MINERALS.forEach((m, i) => { stroke(c[m.ink], 1.2); withAlpha(.9, () => curve(l => a[i] * m.f(l))); });
@@ -130,14 +130,14 @@
     MINERALS.forEach((m, i) => {
       const y = 92 + i * 48;
       label(m.name, 420, y, c[m.ink]);
-      label(Math.round(a[i] * 100) + '%', 536, y, c.ink, 'right');
-      stroke(c.line, 1); ctx.strokeRect(420.5, y + 7.5, 116, 10);
-      ctx.fillStyle = c[m.ink]; ctx.fillRect(421, y + 8, 115 * a[i], 9);
+      stroke(c.line, 1); ctx.strokeRect(420.5, y + 7.5, 74, 10);
+      ctx.fillStyle = c[m.ink]; ctx.fillRect(421, y + 8, 73 * a[i], 9);
+      label(Math.round(a[i] * 100) + '%', 544, y + 17, c.ink, 'right');
     });
     label('→', 193, 152); label('→', 398, 152);
   });
 
-  /* 2 · PitScan: with the Sun high, only steep-walled holes and rocks still cast shadows ---------- */
+  /* 2. PitScan: with the Sun high, only steep-walled holes and rocks still cast shadows ---------- */
   scene('viz-pitscan', 380, 10.5, 9, (t, fade) => {
     const TAN = Math.tan(25 * Math.PI / 180), SURF = 110, FLOOR = 185;
     const bowl = x => SURF + (Math.abs(x - 150) < 42 ? 14 * (1 - ((x - 150) / 42) ** 2) : 0);
@@ -155,9 +155,9 @@
     for (const [x, y] of [[60, SURF], [150, SURF + 14], [225, SURF], [330, SURF], [420, FLOOR], [500, SURF]])
       withAlpha(.7, () => seg(x - (y - 34) * TAN, 34, x, y));
     label('Sun high in the sky', 20, 22, c.pink);
-    label('Crater · fully lit', 150, 150, c.muted, 'center');
+    label('Fully lit crater', 150, 150, c.muted, 'center');
     label('Rock', 270, 136, c.muted, 'center');
-    label('Pit · shadow', 448, 150);
+    label('Pit', 448, 140); label('in shadow', 448, 158);
 
     // The same scene as the camera sees it
     label('Orbital image of the same ground', 20, 236);
@@ -171,12 +171,12 @@
     if (t < 7.5) { stroke(c.accent, 1.6); seg(sx, 242, sx, 350); }
     withAlpha(fade, () => {
       if (sx > 198) label('No shadow', 150, 366, c.muted, 'center');
-      if (sx > 294) { stroke(c.muted, 1.2, [3, 4]); ctx.strokeRect(254.5, 280.5, 42, 31); label('Rock · ignore', 270, 366, c.muted, 'center'); }
+      if (sx > 294) { stroke(c.muted, 1.2, [3, 4]); ctx.strokeRect(254.5, 280.5, 42, 31); label('Ignored', 270, 366, c.muted, 'center'); }
       if (sx > 441) { stroke(c.accent, 1.8); ctx.strokeRect(357.5, 253.5, 85, 85); label('Candidate', 400, 366, c.accent, 'center'); }
     });
   });
 
-  /* 3 · PITS: depth from the length of the shadow and the height of the Sun ---------- */
+  /* 3. PITS: depth from the length of the shadow and the height of the Sun ---------- */
   scene('viz-pits', 360, 9, 1.5, t => {
     const RIM = 170, SURF = 80, DEPTH = 130, FLOOR = SURF + DEPTH, PX_PER_M = 1.3;
     const deg = 27.5 + 12.5 * Math.sin(t / 9 * TAU), i = deg * Math.PI / 180, L = DEPTH * Math.tan(i);
@@ -211,7 +211,7 @@
     pitTop(235, 305, 42, L * k);
     stroke(c.accent, 1.6); seg(193, 305, 193 + L * k, 305);
     [['Sun angle i', deg.toFixed(0) + '°', c.ink], ['Shadow L', (L / PX_PER_M).toFixed(0) + ' m', c.accent],
-     ['Depth h = L / tan i', (L / Math.tan(i) / PX_PER_M).toFixed(0) + ' m', c.ink]].forEach(([name, value, color], n) => {
+     ['Depth = L / tan i', (L / Math.tan(i) / PX_PER_M).toFixed(0) + ' m', c.ink]].forEach(([name, value, color], n) => {
       const y = 284 + n * 26;
       label(name, 330, y, c.muted, 'left', n === 2 ? true : false);
       label(value, 540, y, color, 'right', true);
@@ -219,7 +219,7 @@
     });
   });
 
-  /* 4 · ESSA: a network learns what known pits look like, then scores every patch of a new image ---------- */
+  /* 4. ESSA: a network learns what known pits look like, then scores every patch of a new image ---------- */
   scene('viz-essa', 310, 13, 11, (t, fade) => {
     const training = t < 4;
     label('Training set', 20, 40);
@@ -230,7 +230,7 @@
       stroke(hot ? c.accent : c.line, hot ? 1.8 : 1); ctx.strokeRect(x + .5, y + .5, 38, 38);
       if (hot) { const p = (t / .44) % 1; ctx.fillStyle = c.accent; circle(x + 38 + (196 - x - 38) * p, y + 19 + (117 - y - 19) * p, 3); ctx.fill(); }
     }
-    label('Known pits', 20, 202); label('Moon + Mars', 20, 218);
+    label('Known pits', 20, 202); label('Moon and Mars', 20, 218);
 
     // Network
     const layers = [4, 5, 3].map((count, l) => Array.from({ length: count }, (_, n) => [200 + l * 45, 117 + (n - (count - 1) / 2) * 26]));
@@ -255,11 +255,11 @@
     withAlpha(fade, () => {
       if (t > 6.4) { stroke(c.muted, 1.2, [3, 4]); ctx.strokeRect(379.5, 154.5, 25, 21); label('0.22', 392, 190, c.muted, 'center'); }
       if (t > 7.2) { stroke(c.accent, 1.8); ctx.strokeRect(433.5, 128.5, 43, 43); label('0.96', 455, 122, c.accent, 'center'); }
-      if (t > 10) { label('High score → candidate', 340, 276, c.accent); label('Then checked by a person', 340, 292); }
+      if (t > 10) { label('0.96 → candidate', 340, 276, c.accent); label('a person checks it', 340, 292); }
     });
   });
 
-  /* 5 · Radar simulation: compute the radar image for each cave model, keep the one that matches ---------- */
+  /* 5. Radar simulation: compute the radar image for each cave model, keep the one that matches ---------- */
   const along = (pts, d) => {                      // point at distance d along a polyline
     for (let n = 1; n < pts.length; n++) {
       const [x0, y0] = pts[n - 1], [x1, y1] = pts[n], len = Math.hypot(x1 - x0, y1 - y0);
@@ -278,7 +278,7 @@
   };
   scene('viz-radar', 350, 10.5, 8.5, (t, fade) => {
     const SURF = 90, FLOOR = 175, ROOF = 130;
-    [[20, false, 'Model A · pit only'], [290, true, 'Model B · pit + conduit']].forEach(([ox, conduit, name]) => {
+    [[20, false, 'A: pit only'], [290, true, 'B: pit and conduit']].forEach(([ox, conduit, name]) => {
       const hollow = () => {
         ctx.beginPath(); ctx.moveTo(ox + 70, SURF - 1); ctx.lineTo(ox + 70, FLOOR);
         if (conduit) { ctx.lineTo(ox + 215, FLOOR); ctx.lineTo(ox + 215, ROOF); ctx.lineTo(ox + 130, ROOF); } else ctx.lineTo(ox + 130, FLOOR);
@@ -304,21 +304,21 @@
       label('Simulated image', ox, 232); label('Range →', ox + 250, 232, c.muted, 'right');
       withAlpha(fade, () => {
         radarStrip(ox, 240, conduit ? prog(t, 3, 3.5) : back, conduit ? back : 0, c.accent);
-        if (t > 6.9) label(conduit ? 'Bright tail · match' : 'No tail · no match', ox, 282, conduit ? c.accent : c.muted);
+        if (t > 6.9) label(conduit ? 'Bright tail: match' : 'No tail: no match', ox, 282, conduit ? c.accent : c.muted);
       });
     });
-    label('Observed · Mini-RF, 2010', 155, 310);
+    label('Observed by Mini-RF, 2010', 155, 310);
     radarStrip(155, 318, 1, 1, c.ink);
   });
 
-  /* 6 · GRAIL: two spacecraft feel the missing mass; the dip is matched against the signal of an empty tube ---------- */
+  /* 6. GRAIL: two spacecraft feel the missing mass; the dip is matched against the signal of an empty tube ---------- */
   scene('viz-grail', 364, 13.5, 12, (t, fade) => {
     const SURF = 130, dip = x => -gauss(x, 300, 60);
     const tube = () => { ctx.beginPath(); ctx.ellipse(300, 172, 36, 15, 0, 0, TAU); };
     rock(() => { ctx.beginPath(); ctx.rect(0, SURF, W, 88); }, SURF, 218);
     cut(tube);
     stroke(c.ink, 1.3); seg(0, SURF, W, SURF); tube(); ctx.stroke();
-    label('Empty tube · missing mass', 300, 207, c.muted, 'center');
+    label('Empty tube, missing mass', 300, 207, c.muted, 'center');
 
     // Twin spacecraft: the gap between them changes as each one passes over the deficit
     const trail = -90 + 720 * prog(t, 0, 8.5), lead = trail + 64 + 22 * (dip(trail + 64) - dip(trail));
@@ -341,7 +341,7 @@
         stroke(c.accent, 1.8, [5, 5]); ctx.beginPath();
         for (let x = cx - 120; x <= cx + 120; x += 4) ctx.lineTo(x, 285 - 44 * dip(x - cx + 300));
         ctx.stroke();
-        label(t > 10.8 ? 'Expected signal of an empty tube · match' : 'Sliding the expected signal of a tube', 300, 354, t > 10.8 ? c.accent : c.muted, 'center');
+        label(t > 10.8 ? 'Matches an empty tube' : 'Sliding the signal of a tube', 300, 354, t > 10.8 ? c.accent : c.muted, 'center');
       }
     });
   });

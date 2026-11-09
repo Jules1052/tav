@@ -11,13 +11,13 @@
   if (!gl) { fig.classList.add('nogl'); return; }
 
   const SITES = [
-    { name: 'Mare Tranquillitatis pit', lat: 8.34, lon: 33.22, pos: '8.34° N 33.22° E',
+    { name: 'Mare Tranquillitatis pit', short: 'Tranquillitatis', lat: 8.34, lon: 33.22, pos: '8.34° N 33.22° E',
       text: 'Opening about 98 × 84 m, about 105 m deep. Radar shows a cave leaving its floor.' },
-    { name: 'Marius Hills pit', lat: 14.09, lon: -56.77, pos: '14.09° N 303.23° E',
+    { name: 'Marius Hills pit', short: 'Marius Hills', lat: 14.09, lon: -56.77, pos: '14.09° N 303.23° E',
       text: 'Opening about 58 × 49 m, about 40 m deep. A radar double echo and a gravity deficit point to a tube below.' },
-    { name: 'Mare Ingenii pit', lat: -35.95, lon: 166.06, pos: '35.95° S 166.06° E',
+    { name: 'Mare Ingenii pit', short: 'Ingenii', lat: -35.95, lon: 166.06, pos: '35.95° S 166.06° E',
       text: 'Farside. Opening about 118 × 68 m, 45–65 m deep. An overhang is visible in oblique images.' },
-    { name: 'Hadley Rille', lat: 26.13, lon: 3.63, pos: '26.13° N 3.63° E',
+    { name: 'Hadley Rille', short: 'Hadley Rille', lat: 26.13, lon: 3.63, pos: '26.13° N 3.63° E',
       text: 'A lava channel about 1.5 km wide and 300 m deep, thought to be a collapsed tube. Apollo 15 reached its edge in 1971.' },
   ];
   const RAD = Math.PI / 180, K = 0.11, DIST = 4.3, F = 1 / Math.tan(15 * RAD);
@@ -166,11 +166,11 @@
   SITES.forEach(p => {
     p.el = document.createElement('button'); p.el.type = 'button'; p.el.className = 'pin'; p.el.title = p.name; p.el.setAttribute('aria-label', p.name);
     p.el.addEventListener('click', () => select(p, true)); stage.append(p.el);
-    p.chip = document.createElement('button'); p.chip.type = 'button'; p.chip.textContent = p.name.replace(' pit', '');
+    p.chip = document.createElement('button'); p.chip.type = 'button'; p.chip.textContent = p.short;
     p.chip.addEventListener('click', () => select(p, true)); chips.append(p.chip);
   });
   const LEGEND = [
-    '<span><i class="a"></i>Highlands · anorthosite, low iron</span><span><i class="b"></i>Maria · iron-rich basalt</span><span><i class="c"></i>KREEP · thorium-rich</span><span><i class="pit"></i>Pit or rille</span>',
+    '<span><i class="a"></i>Highlands</span><span><i class="b"></i>Maria, iron-rich</span><span><i class="c"></i>Thorium-rich</span><span><i class="pit"></i>Pit or rille</span>',
     '<span>Low</span><i class="ramp"></i><span>High</span><span><i class="pit"></i>Pit or rille</span>'];
   fig.querySelectorAll('.modes button').forEach(b => b.addEventListener('click', () => {
     mode = +b.dataset.mode; legend.innerHTML = LEGEND[mode];

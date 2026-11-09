@@ -1,4 +1,4 @@
-// Tav app · 1 draw a box, 2 choose what to download, 3 look at the result.
+// Tav app: 1 draw a box, 2 choose what to download, 3 look at the result.
 // Every step has its own address (#…), so Back and Forward work.
 (function () {
   'use strict';
@@ -6,8 +6,8 @@
   var KM = 30.3234, RED = '#ff4b4b';
   var KIND = {
     nac: { c: '#3dffc0', name: 'NAC raw frames' }, radar: { c: '#a98bff', name: 'Radar sounder tracks' },
-    ohrc: { c: '#ff5fb8', name: 'Chandrayaan-2 OHRC tiles · Xenarch' }, hardware: { c: '#5b8cff', name: 'Hardware sites · Xenarch' },
-    terrain: { c: '#ffb347', name: 'NAC terrain tiles · Xenarch' }
+    ohrc: { c: '#ff5fb8', name: 'Chandrayaan-2 OHRC tiles (Xenarch)' }, hardware: { c: '#5b8cff', name: 'Hardware sites (Xenarch)' },
+    terrain: { c: '#ffb347', name: 'NAC terrain tiles (Xenarch)' }
   };
   var fmtB = function (b) { return b >= 1e9 ? (b / 1e9).toFixed(1) + ' GB' : b >= 1e6 ? (b / 1e6).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1e3)) + ' kB'; };
   var num = function (v) { return v.toLocaleString('en', { maximumFractionDigits: Math.abs(v) >= 100 ? 0 : Math.abs(v) >= 10 ? 1 : 2 }); };
@@ -58,7 +58,7 @@
   map.createPane('base').style.zIndex = 150;   // under the tiles: only seen while they load or if NASA is unreachable
   L.imageOverlay('img/tav/moon_map.jpg', [[-90, -180], [90, 180]], { pane: 'base' }).addTo(map);
   L.tileLayer('https://trek.nasa.gov/tiles/Moon/EQ/LRO_WAC_Mosaic_Global_303ppd_v02/1.0.0/default/default028mm/{z}/{y}/{x}.jpg',
-    { maxNativeZoom: 8, maxZoom: 13, noWrap: true, bounds: [[-90, -180], [90, 180]], attribution: 'LROC WAC mosaic · NASA Moon Trek' }).addTo(map);
+    { maxNativeZoom: 8, maxZoom: 13, noWrap: true, bounds: [[-90, -180], [90, 180]], attribution: 'LROC WAC mosaic, NASA Moon Trek' }).addTo(map);
   function fitOpts(maxZoom) {   // the map ends at the panel: keep the box clear of the search bar, zoom buttons and coordinates
     var o = { paddingTopLeft: [40, 80], paddingBottomRight: [70, 50] };
     if (maxZoom) o.maxZoom = maxZoom; return o;
@@ -101,7 +101,7 @@
   }
 
   // ---------------------------------------------------------------- draw
-  // ghost: the shape being drawn · tip: its size in km while a rectangle is dragged · dot: the first corner of a polygon
+  // ghost: the shape being drawn; tip: its size in km while a rectangle is dragged; dot: the first corner of a polygon
   var mode = null, shape = null, ring = null, start = null, verts = [], ghost = null, tip = null, dot = null;
   function clearDraft() { [ghost, tip, dot].forEach(function (l) { if (l) map.removeLayer(l); }); ghost = tip = dot = null; }
   function setMode(m) {
@@ -168,7 +168,7 @@
   }
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && mode) setMode(null); });
 
-  // ----------------------------------------------- step 2 · choose
+  // ----------------------------------------------- step 2: choose
   var opts = { off: {}, max_px: 1024, tc: false };   // fresh every time: nothing stays switched off by surprise
   function check(key, title, sub, disabled) {
     var cb = el('input', { type: 'checkbox', class: 'sw' }); cb.checked = !disabled && !opts.off[key]; cb.disabled = !!disabled; cb.dataset.key = key;
@@ -181,7 +181,7 @@
     shape = L.polygon(pts, { color: RED, weight: 2, fillColor: RED, fillOpacity: 0.08, interactive: false }).addTo(map);
     var b = shape.getBounds(), mid = (b.getNorth() + b.getSouth()) / 2;
     if (!map.getBounds().pad(0.3).contains(b) || map.getBoundsZoom(b) - map.getZoom() > 3) map.fitBounds(b, fitOpts(11));
-    $('c-size').textContent = fmtKm((b.getEast() - b.getWest()) * KM * Math.cos(mid * Math.PI / 180)) + ' km × ' + fmtKm((b.getNorth() - b.getSouth()) * KM) + ' km · ' + kind;
+    $('c-size').textContent = fmtKm((b.getEast() - b.getWest()) * KM * Math.cos(mid * Math.PI / 180)) + ' km × ' + fmtKm((b.getNorth() - b.getSouth()) * KM) + ' km ' + kind;
     ['c-layers', 'c-points', 'c-kaguya'].forEach(function (id) { $(id).innerHTML = ''; });
     $('c-layers').appendChild(el('li', { class: 'muted', text: 'Looking at what is inside…' }));
     Array.prototype.forEach.call($('c-detail').children, function (bt) {
@@ -194,23 +194,23 @@
       var L1 = $('c-layers'), c = p.counts, k = p.kaguya; L1.innerHTML = ''; $('capture').disabled = false;
       ['imagery', 'elevation', 'thermal_night', 'gravity', 'radar_cpr'].forEach(function (key) {
         var l = p.layers[key];
-        if (key === 'elevation') { L1.appendChild(locked('mesh', l.title + ' + 3D mesh', 'Always included · ' + res(l.m_px) + ' · ' + l.px[0].toLocaleString() + ' × ' + l.px[1].toLocaleString() + ' px')); return; }
-        L1.appendChild(check(key, l.title, l.available ? res(l.m_px) + ' · ' + l.px[0].toLocaleString() + ' × ' + l.px[1].toLocaleString() + ' px' : 'Not available at this latitude', !l.available));
+        if (key === 'elevation') { L1.appendChild(locked('mesh', l.title + ' + 3D mesh', 'Always included, ' + res(l.m_px) + ', ' + l.px[0].toLocaleString() + ' × ' + l.px[1].toLocaleString() + ' px')); return; }
+        L1.appendChild(check(key, l.title, l.available ? res(l.m_px) + ', ' + l.px[0].toLocaleString() + ' × ' + l.px[1].toLocaleString() + ' px' : 'Not available at this latitude', !l.available));
       });
-      L1.appendChild(check('vectors', 'Craters, names, pits, geology', (c.craters === null ? '' : c.craters.toLocaleString() + ' craters · ') + c.names + ' names · ' + c.pits + (c.pits === 1 ? ' pit' : ' pits')));
+      L1.appendChild(check('vectors', 'Craters, names, pits, geology', (c.craters === null ? '' : c.craters.toLocaleString() + ' craters, ') + c.names + ' names, ' + c.pits + (c.pits === 1 ? ' pit' : ' pits')));
       L1.appendChild(check('catalogue', 'List of full products in the archives', 'NAC frames, Kaguya tiles, M³ cubes, radar strips: names, sizes and links'));
       var P = $('c-points');
       P.appendChild(check('points_nac', 'NAC raw frames', 'Counted by asking the archive, a few seconds'));
-      var pics = WEB ? ' · pictures in the local version' : '';
+      var pics = WEB ? ', pictures in the local version' : '';
       P.appendChild(check('points_radar', 'Radar sounder tracks', c.radar + (c.radar === 1 ? ' track crosses' : ' tracks cross') + ' the box' + pics, !c.radar));
-      P.appendChild(check('points_xenarch', 'Xenarch images', c.ohrc + ' OHRC tiles · ' + c.hardware + ' hardware sites · ' + c.terrain + ' terrain tiles' + pics, !(c.ohrc + c.hardware + c.terrain)));
+      P.appendChild(check('points_xenarch', 'Xenarch images', c.ohrc + ' OHRC tiles, ' + c.hardware + ' hardware sites, ' + c.terrain + ' terrain tiles' + pics, !(c.ohrc + c.hardware + c.terrain)));
       var K = $('c-kaguya'), need = k.tiles - k.on_disk;
       if (WEB) K.appendChild(row('kaguya', 'Kaguya Terrain Camera, 7 m', 'Local version only: ' + k.tiles + (k.tiles === 1 ? ' tile pair' : ' tile pairs') + ' of 604 MB. Here: image at 83 m, elevation at 59 m', null, { off: true, label: false }));
       else if (!need) K.appendChild(locked('kaguya', 'Kaguya Terrain Camera, 7 m', (k.tiles === 1 ? 'The tile is' : 'All ' + k.tiles + ' tiles are') + ' already on disk: included'));
       else {
         var cb = el('input', { type: 'checkbox', class: 'sw' }); cb.checked = !!opts.tc && need <= 4; cb.id = 'c-tc';
         cb.onchange = function () { opts.tc = cb.checked; };
-        K.appendChild(row('kaguya', 'Kaguya Terrain Camera, 7 m', 'Download ' + need + (need === 1 ? ' tile pair' : ' tile pairs') + ' · ' + fmtB(k.download_mb * 1e6) + '. Without it: image at 83 m, elevation at 59 m', cb));
+        K.appendChild(row('kaguya', 'Kaguya Terrain Camera, 7 m', 'Download ' + need + (need === 1 ? ' tile pair' : ' tile pairs') + ', ' + fmtB(k.download_mb * 1e6) + '. Without it: image at 83 m, elevation at 59 m', cb));
       }
     }).catch(function (e) {
       $('c-layers').innerHTML = ''; $('c-layers').appendChild(el('li', { class: 'muted', text: online ? 'Could not plan this box: ' + e.message : 'Start the Tav server to see what is inside.' }));
@@ -235,7 +235,7 @@
       if (!list.length) ul.appendChild(el('li', { class: 'muted', text: 'None yet.' }));
       list.forEach(function (c) {
         ul.appendChild(el('li', { class: 'cap', tabindex: '0', on: function () { nav(c.id); } },
-          [c.created.replace('T', ' · ').slice(0, 18), el('small', { text: fmtKm(c.size_km[0]) + ' km × ' + fmtKm(c.size_km[1]) + ' km · ' + ((c.bbox.north + c.bbox.south) / 2).toFixed(2) + '°, ' + ((c.bbox.east + c.bbox.west) / 2).toFixed(2) + '° · ' + c.status })]));
+          [c.created.replace('T', ' ').slice(0, 16), el('small', { text: fmtKm(c.size_km[0]) + ' km × ' + fmtKm(c.size_km[1]) + ' km, ' + ((c.bbox.north + c.bbox.south) / 2).toFixed(2) + '°, ' + ((c.bbox.east + c.bbox.west) / 2).toFixed(2) + '°, ' + c.status })]));
       });
     }).catch(function () { online = false; $('offline').hidden = false; });
   }
@@ -273,8 +273,8 @@
   }
   function render() {
     var m = cur, b = m.bbox;
-    $('d-title').textContent = m.created.replace('T', ' · ').slice(0, 18);
-    $('d-sub').textContent = fmtKm(m.size_km[0]) + ' km × ' + fmtKm(m.size_km[1]) + ' km · ' + ((b.north + b.south) / 2).toFixed(3) + '°, ' + ((b.east + b.west) / 2).toFixed(3) + '°';
+    $('d-title').textContent = m.created.replace('T', ' ').slice(0, 16);
+    $('d-sub').textContent = fmtKm(m.size_km[0]) + ' km × ' + fmtKm(m.size_km[1]) + ' km, ' + ((b.north + b.south) / 2).toFixed(3) + '°, ' + ((b.east + b.west) / 2).toFixed(3) + '°';
     var done = m.status !== 'running', chip = $('d-status');   // 'stopped': the web version's page was closed mid-capture
     chip.textContent = m.status === 'complete' ? 'Complete' : done ? 'Stopped' : 'Downloading'; chip.className = 'chip' + (done ? '' : ' run');
     // progress: steps finished out of the steps this capture will run
@@ -293,22 +293,22 @@
     if (best === 'imagery_tc' && vis._picked === 'imagery') { vis.imagery = false; vis.imagery_tc = true; vis._picked = best; }
 
     var b3 = $('d-3d-btn');
-    b3.disabled = !done; b3.textContent = !done ? '3D view · preparing…' : m.mesh ? 'Show in 3D' : 'Build the 3D view';
+    b3.disabled = !done; b3.textContent = !done ? 'Preparing the 3D view…' : m.mesh ? 'Show in 3D' : 'Build the 3D view';
     b3.onclick = function () {
       if (m.mesh) { nav(m.id + '&3d'); return; }
       b3.disabled = true; want = '3d'; api('/api/captures/' + m.id + '/mesh', {}).then(function () { clearInterval(timer); timer = setInterval(function () { openTick && openTick(); }, 1200); }).catch(function (e) { alert('Could not build the 3D view: ' + e.message); });
     };
     var ul = $('d-layers'); ul.innerHTML = '';
-    if (m.mesh) ul.appendChild(row('mesh', '3D mesh', m.mesh.vertices.toLocaleString() + ' points · ' + num(m.mesh.relief_m) + ' m of relief', null, { label: false }));
+    if (m.mesh) ul.appendChild(row('mesh', '3D mesh', m.mesh.vertices.toLocaleString() + ' points, ' + num(m.mesh.relief_m) + ' m of relief', null, { label: false }));
     ul.appendChild(layerRow('outline', 'Capture outline', m.shape));
     m.layers.forEach(function (l) {
       var sub = res(l.m_px);
-      if (l.min !== undefined && l.key.indexOf('imagery') < 0) sub += ' · ' + num(l.min) + ' to ' + num(l.max) + ' ' + l.unit;
-      if (l.coverage_pct !== undefined && l.coverage_pct < 99) sub += ' · covers ' + l.coverage_pct + '%';
+      if (l.min !== undefined && l.key.indexOf('imagery') < 0) sub += ', ' + num(l.min) + ' to ' + num(l.max) + ' ' + l.unit;
+      if (l.coverage_pct !== undefined && l.coverage_pct < 99) sub += ', covers ' + l.coverage_pct + '%';
       ul.appendChild(layerRow(l.key, l.title, sub, null, fileUrl(m, l.preview)));
     });
     m.vectors.forEach(function (v) {
-      if (v.key === 'geology') { ul.appendChild(row('geology', 'Geologic units', (v.units || []).slice(0, 3).map(function (u) { return u.unit + ' ' + u.name + ' ' + u.pct + '%'; }).join(' · '), null, { label: false })); return; }
+      if (v.key === 'geology') { ul.appendChild(row('geology', 'Geologic units', (v.units || []).slice(0, 3).map(function (u) { return u.unit + ' ' + u.name + ' ' + u.pct + '%'; }).join(', '), null, { label: false })); return; }
       if (!(v.key in vis)) vis[v.key] = v.key === 'pits';
       ul.appendChild(layerRow(v.key, v.title, v.count.toLocaleString() + ' inside the box'));
     });
@@ -324,9 +324,9 @@
     var uc = $('d-cat'); uc.innerHTML = '';
     m.catalogue.forEach(function (c) {
       if (!c.count) return;
-      var job = (m.jobs || {})[c.type + ':all'], sub = c.count.toLocaleString() + (c.count === 1 ? ' product · ' : ' products · ') + fmtB(c.bytes) + (c.listed < c.count ? ' (first ' + c.listed + ')' : '');
-      if (WEB) { uc.appendChild(row('catalogue', c.title, sub + ' · full files in the local version', null, { label: false })); return; }
-      if (job) sub = (job.state === 'done' ? 'Downloaded ' : 'Downloading ') + job.done + ' of ' + job.total + ' · ' + fmtB(job.bytes) + (job.errors.length ? ' · ' + job.errors.length + ' failed' : '');
+      var job = (m.jobs || {})[c.type + ':all'], sub = c.count.toLocaleString() + (c.count === 1 ? ' product, ' : ' products, ') + fmtB(c.bytes) + (c.listed < c.count ? ' (first ' + c.listed + ')' : '');
+      if (WEB) { uc.appendChild(row('catalogue', c.title, sub + ', full files in the local version', null, { label: false })); return; }
+      if (job) sub = (job.state === 'done' ? 'Downloaded ' : 'Downloading ') + job.done + ' of ' + job.total + ', ' + fmtB(job.bytes) + (job.errors.length ? ', ' + job.errors.length + ' failed' : '');
       var btn = el('button', { type: 'button', text: 'Download', on: function () {
         if (c.bytes > 1e9 && !confirm('Download ' + c.listed + ' products, ' + fmtB(c.bytes) + ', into the capture folder?')) return;
         btn.disabled = true; api('/api/captures/' + m.id + '/fetch', { type: c.type }).catch(function (e) { alert(e.message); });
@@ -343,7 +343,7 @@
       uf.appendChild(el('li', {}, [el('a', a), el('span', { text: fmtB(f.bytes) })]));
     });
     if (m.files.length > 60) uf.appendChild(el('li', { class: 'muted', text: '… and ' + (m.files.length - 60) + ' more' }));
-    $('d-path').textContent = m.dir; $('d-nfiles').textContent = m.files.length + ' files · ' + fmtB(m.files.reduce(function (a, f) { return a + f.bytes; }, 0));
+    $('d-path').textContent = m.dir; $('d-nfiles').textContent = m.files.length + ' files, ' + fmtB(m.files.reduce(function (a, f) { return a + f.bytes; }, 0));
     var un = $('d-notes'); un.innerHTML = ''; m.notes.forEach(function (n) { un.appendChild(el('li', { text: n })); });
 
     sync(); applyWant();
@@ -383,7 +383,7 @@
             var ll = [f.geometry.coordinates[1], f.geometry.coordinates[0]], p = f.properties;
             if (v.key === 'craters') L.circle(ll, { radius: p.diameter_km * 500 * 6378137 / 1737400, color: '#7aa2ff', weight: 1.5, fill: false, interactive: false }).addTo(g);
             else if (v.key === 'names') L.circleMarker(ll, { radius: 3, color: '#fff', weight: 1, fillOpacity: 1 }).bindTooltip(p.name, { permanent: true, direction: 'right', className: 'nm' }).addTo(g);
-            else L.circleMarker(ll, { radius: 7, color: '#ff5fb8', weight: 3, fill: false }).bindTooltip(p.name + ' · ' + p.depth_m + ' m deep', { direction: 'top' }).addTo(g);
+            else L.circleMarker(ll, { radius: 7, color: '#ff5fb8', weight: 3, fill: false }).bindTooltip(p.name + ', ' + p.depth_m + ' m deep', { direction: 'top' }).addTo(g);
           });
         });
         return g;
@@ -425,7 +425,7 @@
     var m = cur, p = m.points[i], same = m.points.filter(function (x) { return x.kind === p.kind; }), pos = same.indexOf(p);
     if (vp === i && !tile) return;
     vp = i; $('viewer').hidden = false; $('v-img').hidden = true; $('v-wait').hidden = false; $('v-wait').textContent = p.kind === 'nac' ? 'Reading the frame from the LROC archive…' : p.kind === 'radar' ? 'Downloading the track from JAXA (45 MB the first time)…' : 'Loading…';
-    $('v-kind').textContent = KIND[p.kind].name + ' · ' + (pos + 1) + ' of ' + same.length;
+    $('v-kind').textContent = KIND[p.kind].name + ', ' + (pos + 1) + ' of ' + same.length;
     $('v-title').textContent = p.title; $('v-text').textContent = p.text; $('v-extra').textContent = '';
     markers.forEach(function (mk) { if (mk._icon) mk._icon.firstChild.classList.toggle('on', mk.p.i === i); });
     var tools = $('v-tools'); tools.innerHTML = '';
@@ -441,7 +441,7 @@
       if (r.n > 1) tools.appendChild(el('button', { type: 'button', text: 'Tile ' + (r.i + 1) + ' of ' + r.n + ' →', on: function () { showPoint(i, r.i + 1); } }));
       if (r.more) { var wide = false, b = el('button', { type: 'button', text: 'Wide view', on: function () { wide = !wide; b.textContent = wide ? 'Close-up' : 'Wide view'; put(wide ? r.more : r.img); } }); tools.appendChild(b); }
       if (r.download) {
-        var d = el('button', { type: 'button', text: 'Download full frame · ' + fmtB(r.download.bytes), on: function () { d.disabled = true; d.textContent = 'Downloading into the capture folder…'; api('/api/captures/' + m.id + '/fetch', { type: r.download.type, id: r.download.id }); } });
+        var d = el('button', { type: 'button', text: 'Download full frame (' + fmtB(r.download.bytes) + ')', on: function () { d.disabled = true; d.textContent = 'Downloading into the capture folder…'; api('/api/captures/' + m.id + '/fetch', { type: r.download.type, id: r.download.id }); } });
         tools.appendChild(d);
       }
     }).catch(function (e) { if (vp === i) $('v-wait').textContent = 'Could not load: ' + e.message; });
@@ -488,7 +488,7 @@
         ul.appendChild(el('li', { tabindex: '0', on: function () {
           ul.hidden = true; $('q').value = x[0];
           var z = x[4] > 300 ? 4 : x[4] > 60 ? 6 : x[4] > 10 ? 8 : 10; map.setView([x[2], x[3]], z);
-        } }, [x[0], el('small', { text: x[1] + (x[4] ? ' · ' + x[4] + ' km' : '') })]));
+        } }, [x[0], el('small', { text: x[1] + (x[4] ? ', ' + x[4] + ' km' : '') })]));
       });
     }).catch(function () { ul.hidden = true; });
   });

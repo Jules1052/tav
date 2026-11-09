@@ -1317,8 +1317,8 @@
   },
   "points": [
    "[\"radar\", 14.1, -56.71971, \"Radar sounder track 20080907063859\"]",
-   "[\"terrain\", 14.09, -56.77, \"NAC terrain tile \\u00b7 Marius Hills pit\"]",
-   "[\"terrain\", 14.09, -56.77, \"NAC terrain tile \\u00b7 Marius Hills pit\"]"
+   "[\"terrain\", 14.09, -56.77, \"NAC terrain tile, Marius Hills pit\"]",
+   "[\"terrain\", 14.09, -56.77, \"NAC terrain tile, Marius Hills pit\"]"
   ],
   "nac_points": 143,
   "catalogue": {

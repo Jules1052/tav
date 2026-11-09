@@ -146,16 +146,16 @@
   const sldem = (ti, tj) => GEO + '/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/sldem2015/tiles/float_img/sldem2015_512_' +
     ['30n_60n', '00n_30n', '30s_00s', '60s_30s'][ti] + '_' + pad(tj * 45, 3) + '_' + pad(tj * 45 + 45, 3) + '_float.img';
   const RASTERS = [
-    { key: 'elevation', title: 'Elevation · SLDEM', unit: 'm', ppd: 512, top: 60, bot: -60, west: 0, dtype: 'f4', scale: 1000, tiles: [15360, 23040, sldem],
+    { key: 'elevation', title: 'Elevation (SLDEM)', unit: 'm', ppd: 512, top: 60, bot: -60, west: 0, dtype: 'f4', scale: 1000, tiles: [15360, 23040, sldem],
       valid: a => Math.abs(a) < 50, source: 'SLDEM2015, LOLA + Kaguya, 59 m per pixel' },
-    { key: 'elevation_lola', title: 'Elevation · LOLA', unit: 'm', ppd: 64, top: 90, bot: -90, west: 0, dtype: 'i2', scale: 0.5,
+    { key: 'elevation_lola', title: 'Elevation (LOLA)', unit: 'm', ppd: 64, top: 90, bot: -90, west: 0, dtype: 'i2', scale: 0.5,
       url: GEO + '/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_64.img', source: 'LOLA LDEM 64 px/deg, 474 m per pixel' },
-    { key: 'thermal_night', title: 'Night temperature · Diviner', unit: 'K', ppd: 128, top: 70, bot: -70, west: 0, dtype: 'f4', scale: 1,
+    { key: 'thermal_night', title: 'Night temperature (Diviner)', unit: 'K', ppd: 128, top: 70, bot: -70, west: 0, dtype: 'f4', scale: 1,
       url: GEO + '/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_ghrm/img/dghrm_tbol_m_70s70n_img.img',
       valid: a => a > 20 && a < 500, source: 'Diviner global mosaic, bolometric temperature at midnight, 237 m per pixel' },
-    { key: 'gravity', title: 'Gravity · GRAIL', unit: 'mGal', ppd: 16, top: 90, bot: -90, west: 0, dtype: 'f4', scale: 1,
+    { key: 'gravity', title: 'Gravity (GRAIL)', unit: 'mGal', ppd: 16, top: 90, bot: -90, west: 0, dtype: 'f4', scale: 1,
       url: GEO + '/grail/grail-l-lgrs-5-rdr-v1/grail_1001/rsdmap/gggrx_1200a_anom_l660.img', source: 'GRAIL GRGM1200A free-air anomaly to degree 660, 1.9 km per pixel' },
-    { key: 'radar_cpr', title: 'Radar polarisation · Mini-RF', unit: 'ratio', ppd: 128, top: 90, bot: -90, west: -180, dtype: 'f4', scale: 1,
+    { key: 'radar_cpr', title: 'Radar polarisation (Mini-RF)', unit: 'ratio', ppd: 128, top: 90, bot: -90, west: -180, dtype: 'f4', scale: 1,
       url: GEO + '/lro/lro-l-mrflro-5-global-mosaic-v1/lromrf_1001/data/128ppd/global_cpr_128ppd_simp_0c.img',
       valid: a => a > 0 && a < 50, source: 'Mini-RF global mosaic, circular polarisation ratio, 237 m per pixel' },
   ];
@@ -376,7 +376,7 @@
       const im = scaled(mos, bx[0], bx[1], bx[2] - bx[0], bx[3] - bx[1], W, H), x = im.getContext('2d'), px = x.getImageData(0, 0, W, H), d = px.data;
       for (let i = 0; i < d.length; i += 4) d[i] = d[i + 1] = d[i + 2] = (d[i] * 19595 + d[i + 1] * 38470 + d[i + 2] * 7471 + 0x8000) >> 16;   // PIL's RGB → L
       x.putImageData(px, 0, 0); await this.put('wac.jpg', await toBlob(im, 'image/jpeg', 0.9));
-      this.m.layers.push({ key: 'imagery', title: 'Imagery · LROC WAC', file: 'wac.jpg', preview: 'wac.jpg', bounds: [[this.s, this.w], [this.n, this.e]],
+      this.m.layers.push({ key: 'imagery', title: 'Imagery (LROC WAC)', file: 'wac.jpg', preview: 'wac.jpg', bounds: [[this.s, this.w], [this.n, this.e]],
         m_px: pyRound(KM_DEG * 1000 / ppd, 0), source: 'LROC WAC global mosaic via NASA Moon Trek, zoom ' + z, px: [W, H] });
     }
 
@@ -559,7 +559,7 @@
     [['elevation', elevationRaster(s, n)], ['thermal_night', RASTERS[2]], ['gravity', RASTERS[3]], ['radar_cpr', RASTERS[4]]].forEach(([key, r]) => {
       out.layers[key] = { title: r.title, m_px: pyRound(KM_DEG * 1000 / r.ppd, 1), px: [Math.trunc((e - w) * r.ppd) + 1, Math.trunc((n - s) * r.ppd) + 1], available: Math.min(n, r.top) > Math.max(s, r.bot), source: r.source };
     });
-    out.layers.imagery = { title: 'Imagery · LROC WAC', m_px: 83, px: [Math.trunc((e - w) * 364) + 1, Math.trunc((n - s) * 364) + 1], available: true, source: 'LROC WAC global mosaic, NASA Moon Trek' };
+    out.layers.imagery = { title: 'Imagery (LROC WAC)', m_px: 83, px: [Math.trunc((e - w) * 364) + 1, Math.trunc((n - s) * 364) + 1], available: true, source: 'LROC WAC global mosaic, NASA Moon Trek' };
     let tiles = 0;
     for (let top = Math.floor(s / 3) * 3 + 3; top < Math.ceil(n / 3) * 3 + 1; top += 3) for (let west = Math.floor(pyMod(w, 360) / 3) * 3; west < Math.ceil((pyMod(w, 360) + (e - w)) / 3) * 3; west += 3) tiles++;
     out.kaguya = { tiles, on_disk: 0, download_mb: tiles * 604 };

@@ -1,4 +1,4 @@
-/* Aleph · Tav (aleph-tav.html). WebGL2, no library.
+/* Aleph + Tav (aleph-tav.html). WebGL2, no library.
  * Background (.field): cream paper and the Earth–Moon gravity lines
  * (equipotentials of the two bodies, the Moon's pull exaggerated) drifting slowly outward. Near the pointer they turn red.
  * Globes: the Earth (up left) and the Moon (down right) start as paper maps. Point at one, touch it or drag it,

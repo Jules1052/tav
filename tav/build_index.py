@@ -100,7 +100,7 @@ def xenarch():
         for rs in groups.values():
             r = rs[0]
             pts.append(dict(kind=kind, lat=float(r['lat']), lon=w180(r['lon_east']),
-                            title=f"{label} · {r['target'] if kind == 'terrain' else r['frame_id'][:27]}",
+                            title=f"{label}, {r['target'] if kind == 'terrain' else r['frame_id'][:27]}",
                             text=f"{r['instrument']}, {r['utc_start'][:10]}, {r['resolution_m_px']} m per pixel, {r['landform'].replace('_', ' ')}. {len(rs)} tile{'s' if len(rs) > 1 else ''} of 1,024 px.",
                             files=[f'natural-terrain_training/{sub}/' + x['file_name'] for x in rs]))
     json.dump(pts, open(OUT + '/xenarch.json', 'w'), ensure_ascii=False, separators=(',', ':'))
