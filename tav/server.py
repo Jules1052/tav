@@ -7,7 +7,7 @@ captures/<id>/, with manifest.json as the file to read first.
 
 Needs: python3, numpy, pillow, curl. No AI inside: it only collects data.
 """
-import csv, io, json, math, os, re, struct, subprocess, sys, threading, time, traceback, urllib.parse
+import bisect, csv, io, json, math, os, re, struct, subprocess, sys, threading, time, traceback, urllib.parse
 from concurrent.futures import ThreadPoolExecutor
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
@@ -36,6 +36,63 @@ def curl(url, rng=None, timeout=180, headers=()):
     if r.returncode != 0: raise IOError(f'{url}: {r.stderr.decode(errors="replace").strip()[:160]}')
     if rng and len(r.stdout) != rng[1] - rng[0]: raise IOError(f'{url}: server ignored the byte range')
     return r.stdout
+
+
+class RangesIgnored(IOError): pass
+
+
+def curl_ranges(url, spans, timeout=600):
+    """Fetch byte ranges [a, b) of one file in a single request (multipart/byteranges); one bytes object per range."""
+    if len(spans) == 1: return [curl(url, spans[0], timeout)]
+    want = sum(b - a for a, b in spans)   # a server that ignores the ranges would send the whole file: stop it early
+    cmd = ['curl', '-fsSL', '--retry', '2', '-m', str(timeout), '-A', 'tav/0.1', '-D', '-', '--max-filesize', str(want + 300 * len(spans) + 65536),
+           '-H', 'Range: bytes=' + ','.join(f'{a}-{b - 1}' for a, b in spans), url]
+    r = subprocess.run(cmd, capture_output=True)
+    if r.returncode == 63 or b'Maximum file size exceeded' in r.stderr: raise RangesIgnored(f'{url}: server ignored the byte ranges')   # 56 over HTTP/2
+    if r.returncode != 0: raise IOError(f'{url}: {r.stderr.decode(errors="replace").strip()[:160]}')
+    out, head = r.stdout, ''
+    while out.startswith(b'HTTP/'):   # one header block per redirect or retry, then the body
+        i = out.find(b'\r\n\r\n')
+        if i < 0: raise IOError(f'{url}: truncated reply')
+        head, out = out[:i].decode('latin-1'), out[i + 4:]
+    if head.split(None, 2)[1:2] != ['206']: raise RangesIgnored(f'{url}: server ignored the byte ranges')
+    ct = re.search(r'(?im)^content-type:\s*multipart/byteranges.*?boundary="?([^";\s]+)', head); parts = []
+    if ct:   # walk the parts by their Content-Range length, so the boundary may appear inside the data
+        delim, pos = b'--' + ct.group(1).encode(), 0
+        while True:
+            i = out.find(delim, pos)
+            if i < 0 or out[i + len(delim):i + len(delim) + 2] == b'--': break
+            j = out.find(b'\r\n\r\n', i); cr = re.search(rb'(?i)content-range:\s*bytes\s+(\d+)-(\d+)/', out[i:j]) if j > 0 else None
+            if not cr: raise IOError(f'{url}: unreadable multipart reply')
+            a, n = int(cr.group(1)), int(cr.group(2)) + 1 - int(cr.group(1))
+            parts.append((a, out[j + 4:j + 4 + n])); pos = j + 4 + n
+    else:   # the server merged every range into one
+        cr = re.search(r'(?im)^content-range:\s*bytes\s+(\d+)-', head)
+        if not cr: raise IOError(f'{url}: reply without Content-Range')
+        parts.append((int(cr.group(1)), out))
+    parts.sort(key=lambda p: p[0]); starts, res = [p[0] for p in parts], []
+    for a, b in spans:   # the server may merge or reorder ranges
+        s, d = parts[max(bisect.bisect_right(starts, a) - 1, 0)]
+        if not s <= a or b - s > len(d): raise IOError(f'{url}: bytes {a}-{b - 1} missing from the reply')
+        res.append(d[a - s:b - s])
+    return res
+
+
+def curl_spans(url, spans, max_ranges=400, max_bytes=32 << 20):
+    """The bytes of all ranges [a, b) of one file, back to back, in as few requests as possible.
+    PDS Geosciences rejects a Range header over ~16 KB (about 700 ranges), so a request carries at most 400."""
+    merged = []
+    for a, b in spans:   # adjacent ranges travel as one
+        if merged and merged[-1][1] == a: merged[-1][1] = b
+        else: merged.append([a, b])
+    batches = []
+    for a, b in merged:
+        if not batches or len(batches[-1]) >= max_ranges or sum(y - x for x, y in batches[-1]) + b - a > max_bytes: batches.append([])
+        batches[-1].append((a, b))
+    def one(batch):
+        try: return curl_ranges(url, batch)
+        except RangesIgnored: return [curl(url, s, timeout=120) for s in batch]   # no multi-range support: one request per range
+    with ThreadPoolExecutor(4) as ex: return b''.join(d for got in ex.map(one, batches) for d in got)
 
 
 def curl_to(url, path, headers=(), timeout=3600):
@@ -81,15 +138,9 @@ class Raster:
         if local and os.path.exists(local):
             m = np.memmap(local, self.dtype, 'r', offset=self.offset, shape=(os.path.getsize(local) - self.offset) // bpp // width * width).reshape(-1, width)
             return np.array(m[fr:fr + nr:k, fc:fc + nc:k])
-        if nr * width * bpp <= 48e6:
-            a0 = self.offset + fr * width * bpp
-            raw = curl(url, (a0, a0 + nr * width * bpp), timeout=600)
-            return np.frombuffer(raw, self.dtype).reshape(nr, width)[::k, fc:fc + nc:k].copy()
-        rows = list(range(fr, fr + nr, k))
-        def one(r):
-            a0 = self.offset + (r * width + fc) * bpp
-            return np.frombuffer(curl(url, (a0, a0 + nc * bpp), timeout=120), self.dtype)[::k]
-        with ThreadPoolExecutor(8) as ex: return np.stack(list(ex.map(one, rows)))
+        rows = range(fr, fr + nr, k)   # only the part of each row inside the box, hundreds of rows per request
+        raw = curl_spans(url, [(self.offset + (r * width + fc) * bpp, self.offset + (r * width + fc + nc) * bpp) for r in rows])
+        return np.frombuffer(raw, self.dtype).reshape(len(rows), nc)[:, ::k].copy()
 
     def read(self, s, n, w, e, max_px=1024):
         n, s = min(n, self.lat_top), max(s, self.lat_bot)
