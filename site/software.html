@@ -2,41 +2,53 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mapping software – Tav ת</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The software behind the maps – Tav ת</title>
+<meta name="description" content="The programs that turn orbital data into mineral maps and cave candidates, six of them animated.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7.5' fill='%231B1B19' stroke='%23F3EAD9'/%3E%3Ccircle cx='6.2' cy='9.6' r='3.4' fill='none' stroke='%23F3EAD9' stroke-width='.8'/%3E%3Cpath d='M9.6 .8c.9 2.6-1.4 3.8-.5 6.4s1.6 3.9.6 8.4' stroke='%23A98BFF' stroke-width='1.9' fill='none'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="style.css?v=23">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English&family=JetBrains+Mono:wght@400;500&family=Poppins:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<link rel="stylesheet" href="style.css?v=43">
 </head>
 <body>
-<nav class="top">
-  <div class="wrap">
-    <a class="brand" href="index.html"><img class="logo" src="img/logo.svg" width="32" height="32" alt=""><span><b>Tav <span lang="he" aria-hidden="true">ת</span></b><small>Everything about a place on the Moon</small></span></a>
-    <div class="links">
-      <a class="label" href="#minerals">Minerals</a>
-      <a class="label" href="#caves">Caves</a>
-    </div>
-    <a class="btn primary" href="tav-app.html">Open the map</a>
-  </div>
-</nav>
+<svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <filter id="rough" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="3" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="4" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+<svg class="river" viewBox="0 0 100 1000" preserveAspectRatio="none" aria-hidden="true"><path d="M46 -20C64 70 22 130 40 220S86 330 60 420S12 540 38 640S88 760 62 850S30 960 48 1020"/></svg>
 
-<header class="hero">
-  <div class="wrap">
-    <div class="label">Study 02</div>
-    <h1>Mapping the Moon’s minerals and caves (software)</h1>
-    <p class="lede">The programs that turn orbital data into mineral maps and cave candidates, six of them animated.</p>
-  </div>
+<header class="top wrap">
+  <nav aria-label="Tav">
+    <a class="brand" href="tav.html"><img src="img/tav-banner.png" width="1960" height="480" alt="Tav"></a>
+    <div class="links">
+      <a href="https://github.com/Jules1052/tav">GitHub ↗</a>
+    </div>
+    <a class="btn violet" href="tav-app.html">Open the map</a>
+  </nav>
 </header>
 
 <main class="wrap">
 
+  <div class="page-head">
+    <h1>The software behind the maps</h1>
+    <p class="lede">The programs that turn orbital data into mineral maps and cave candidates, six of them animated. The instruments and what they found are in <a href="mapping.html">Mapping the Moon’s minerals and caves</a>.</p>
+    <nav class="toc" aria-label="Sections">
+      <a href="#minerals">Minerals</a><a href="#pitscan">PitScan</a><a href="#pits">PITS</a><a href="#essa">ESSA</a><a href="#radar">Radar</a><a href="#grail">Gravity</a><a href="#sources">Sources</a>
+    </nav>
+  </div>
+
   <section id="minerals">
-    <div class="head"><span class="label">01</span><h2>Minerals</h2></div>
-    <ul class="log">
-      <li><span class="label">Tetracorder<i>USGS</i></span><p>Expert system that compares each spectrum with a library of laboratory spectra and assigns the closest mineral. Used on M³ data.</p></li>
-      <li><span class="label">Modified Gaussian Model<i>MGM</i></span><p>Splits a spectrum into its individual absorption bands, to tell apart different pyroxenes or olivine, for example.</p></li>
-      <li><span class="label">Radiative transfer models<i>Hapke</i></span><p>Estimate the percentage of each mineral in a mixture. The global maps of olivine, pyroxene and plagioclase from Kaguya data were made this way.</p></li>
-      <li><span class="label">Lucey algorithms</span><p>Formulas that derive iron and titanium from ratios between colour bands. Written for Clementine and still in use.</p></li>
-      <li><span class="label">ENVI and PyHAT</span><p>Environments for hyperspectral analysis that support M³ data. ENVI is commercial; PyHAT is a Python tool from USGS.</p></li>
+    <div class="head"><span class="label num">01</span><h2>Minerals</h2>
+      <p>From a spectrum to a mineral: match it to a library, split it into bands, or model the mixture.</p></div>
+    <ul class="log nowhen">
+      <li><span class="who">Tetracorder<i>USGS</i></span><p>Expert system that compares each spectrum with a library of laboratory spectra and assigns the closest mineral. Used on M³ data.</p></li>
+      <li><span class="who">Modified Gaussian Model<i>MGM</i></span><p>Splits a spectrum into its individual absorption bands, to tell apart different pyroxenes or olivine, for example.</p></li>
+      <li><span class="who">Radiative transfer models<i>Hapke</i></span><p>Estimate the percentage of each mineral in a mixture. The global maps of olivine, pyroxene and plagioclase from Kaguya data were made this way.</p></li>
+      <li><span class="who">Lucey algorithms<i>Clementine</i></span><p>Formulas that derive iron and titanium from ratios between colour bands. Written for Clementine and still in use.</p></li>
+      <li><span class="who">ENVI and PyHAT<i>Commercial, USGS</i></span><p>Environments for hyperspectral analysis that support M³ data. ENVI is commercial; PyHAT is a Python tool from USGS.</p></li>
     </ul>
 
     <article class="tool">
@@ -45,7 +57,7 @@
         <h3>Machine learning</h3>
         <p>Neural networks and “unmixing” methods applied to M³ cubes to classify minerals automatically. Mostly research code tied to single papers, not established products.</p>
       </div>
-      <figure>
+      <figure class="night">
         <canvas id="viz-unmix" style="aspect-ratio: 560 / 270" role="img" aria-label="Animation: a grid of image pixels is processed one at a time. The spectrum of each pixel is drawn as a curve, split into pyroxene, olivine and plagioclase curves, and three bars show the estimated share of each. The pixel is then coloured by its dominant mineral."></canvas>
         <figcaption class="label">Each pixel’s spectrum is split into mineral shares</figcaption>
       </figure>
@@ -53,63 +65,64 @@
   </section>
 
   <section id="caves">
-    <div class="head"><span class="label">02</span><h2>Caves and pits</h2></div>
+    <div class="head"><span class="label num">02</span><h2>Caves and pits</h2>
+      <p>Find the holes, measure them from their shadows, then ask radar and gravity what lies under them.</p></div>
 
-    <article class="tool">
+    <article class="tool" id="pitscan">
       <div>
         <span class="label">LROC team, Arizona State University</span>
         <h3>PitScan</h3>
         <p>Algorithm that searched LRO’s high-resolution images automatically for anomalous shadows. It produced most of the catalogue of over 200 pits, published as the Lunar Pit Atlas. <a class="src" href="https://wufs.wustl.edu/psida/2018/abspres/pdf/6051.pdf">Source</a></p>
       </div>
-      <figure>
+      <figure class="night">
         <canvas id="viz-pitscan" style="aspect-ratio: 560 / 380" role="img" aria-label="Animation: side view of a shallow crater, a rock and a steep pit under a high Sun. The crater is fully lit; the rock and the pit cast shadows. Below, a scan line crosses the same scene seen from above: the crater is skipped, the rock is rejected, the pit is boxed as a candidate."></canvas>
         <figcaption class="label">With the Sun high, only rocks and steep holes keep a shadow</figcaption>
       </figure>
     </article>
 
-    <article class="tool">
+    <article class="tool" id="pits">
       <div>
         <span class="label">University of Kent</span>
         <h3>PITS (Pit Topography from Shadows)</h3>
         <p>Calculates the depth of a pit from the shape of its shadow. <a class="src" href="https://academic.oup.com/rasti/article/2/1/492/7241547">Source</a></p>
       </div>
-      <figure>
+      <figure class="night">
         <canvas id="viz-pits" style="aspect-ratio: 560 / 360" role="img" aria-label="Animation: cross-section of a pit. A sunray grazes the rim and lands on the floor, marking the edge of the shadow. As the Sun angle changes the shadow gets longer or shorter, but shadow length divided by the tangent of the Sun angle always gives the same depth, 100 metres."></canvas>
         <figcaption class="label">The shadow width and the Sun angle give the depth</figcaption>
       </figure>
     </article>
 
-    <article class="tool">
+    <article class="tool" id="essa">
       <div>
         <span class="label">University of Kent</span>
         <h3>ESSA (Entrances to Sub-Surface Areas)</h3>
         <p>Deep-learning model trained to recognise cavity entrances in images of the Moon and Mars. It flagged some new candidates. <a class="src" href="https://kar.kent.ac.uk/110353/1/New%20candidate%20cave%20entrances%20on%20the%20Moon%20found%20using%20deep%20learning.pdf">Source</a></p>
       </div>
-      <figure>
+      <figure class="night">
         <canvas id="viz-essa" style="aspect-ratio: 560 / 310" role="img" aria-label="Animation: thumbnails of known pits feed a neural network. The network then scans a new image window by window. A boulder shadow gets a low score of 0.22 and is dropped; a pit gets 0.96 and is kept as a candidate for a person to check."></canvas>
         <figcaption class="label">Trained on known pits, it scores every patch of a new image</figcaption>
       </figure>
     </article>
 
-    <article class="tool">
+    <article class="tool" id="radar">
       <div>
         <span class="label">University of Trento</span>
         <h3>Radar simulations</h3>
         <p>3D electromagnetic models that predict the radar echo of a pit with or without a conduit, to compare with the real data. The method behind the 2024 result at Mare Tranquillitatis. <a class="src" href="https://doi.org/10.1038/s41550-024-02302-y">Source</a></p>
       </div>
-      <figure>
+      <figure class="night">
         <canvas id="viz-radar" style="aspect-ratio: 560 / 350" role="img" aria-label="Animation: two models side by side, a pit alone and a pit with a side conduit. Radar pulses enter both at an angle. In the pit alone they bounce off the wall and return quickly. In the conduit they travel further and return late, adding a bright tail to the simulated image. Only that image matches the observed one."></canvas>
         <figcaption class="label">Echoes from a conduit come back late, as a bright tail</figcaption>
       </figure>
     </article>
 
-    <article class="tool">
+    <article class="tool" id="grail">
       <div>
         <span class="label">Purdue University</span>
         <h3>GRAIL gravity analysis</h3>
         <p>Gradiometry and correlation techniques that look for the linear mass deficits typical of buried lava tubes. <a class="src" href="https://digitalcommons.usf.edu/kip_articles/6189">Source</a></p>
       </div>
-      <figure>
+      <figure class="night">
         <canvas id="viz-grail" style="aspect-ratio: 560 / 364" role="img" aria-label="Animation: two spacecraft fly in line over ground that hides an empty tube. The distance between them changes as they pass over it. The gravity trace drawn below dips over the tube. A dashed curve, the expected signal of an empty tube, then slides along the trace and locks onto the dip."></canvas>
         <figcaption class="label">An empty tube shows as a dip in gravity</figcaption>
       </figure>
@@ -119,8 +132,8 @@
   </section>
 
   <section id="sources">
-    <div class="head"><span class="label">03</span><h2>Sources</h2></div>
-    <ul class="log plain">
+    <div class="head"><span class="label num">03</span><h2>Sources</h2></div>
+    <ul class="sources">
       <li><span class="label">Caves</span><p class="srcs">
         <a href="https://wufs.wustl.edu/psida/2018/abspres/pdf/6051.pdf">Wagner &amp; Robinson 2018, PitScan</a>
         <a href="https://www.lroc.asu.edu/atlases">LROC, Lunar Pit Atlas</a>
@@ -134,12 +147,12 @@
 </main>
 
 <footer>
-  <div class="wrap">
-    <nav class="pages" aria-label="All pages"><a href="index.html">Home</a><a href="tav-app.html">Map</a><a href="mapping.html">Mapping the Moon</a><a href="software.html" aria-current="page">Software</a><a href="tav.html">Aleph for the Moon</a><a href="detection.html">Cave detection</a><a href="aleph-tav.html">Aleph + Tav</a></nav>
-    <span class="label made">Made by a human on Earth 🌍 — for now</span>
-  </div>
+  <div class="wrap"><div>
+    <nav class="pages" aria-label="All pages"><a href="index.html">Aleph + Tav</a><a href="tav.html">Tav</a></nav>
+    <span class="made">Made by a human on Earth (for now)</span>
+  </div></div>
 </footer>
 
-<script src="software.js"></script>
+<script src="software.js?v=2"></script>
 </body>
 </html>

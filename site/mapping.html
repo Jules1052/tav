@@ -2,180 +2,214 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mapping the Moon – Tav ת</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mapping the Moon’s minerals and caves – Tav ת</title>
+<meta name="description" content="Every method used so far to find what the Moon is made of and where it is hollow, and what each one found.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7.5' fill='%231B1B19' stroke='%23F3EAD9'/%3E%3Ccircle cx='6.2' cy='9.6' r='3.4' fill='none' stroke='%23F3EAD9' stroke-width='.8'/%3E%3Cpath d='M9.6 .8c.9 2.6-1.4 3.8-.5 6.4s1.6 3.9.6 8.4' stroke='%23A98BFF' stroke-width='1.9' fill='none'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="style.css?v=23">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English&family=JetBrains+Mono:wght@400;500&family=Poppins:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<link rel="stylesheet" href="style.css?v=43">
 </head>
 <body>
-<nav class="top">
-  <div class="wrap">
-    <a class="brand" href="index.html"><img class="logo" src="img/logo.svg" width="32" height="32" alt=""><span><b>Tav <span lang="he" aria-hidden="true">ת</span></b><small>Everything about a place on the Moon</small></span></a>
-    <div class="links">
-      <a class="label" href="#methods">Methods</a>
-      <a class="label" href="#minerals">Minerals</a>
-      <a class="label" href="#water">Water</a>
-      <a class="label" href="#caves">Caves</a>
-    </div>
-    <a class="btn primary" href="tav-app.html">Open the map</a>
-  </div>
-</nav>
+<svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <filter id="rough" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="3" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="4" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+<svg class="river" viewBox="0 0 100 1000" preserveAspectRatio="none" aria-hidden="true"><path d="M46 -20C64 70 22 130 40 220S86 330 60 420S12 540 38 640S88 760 62 850S30 960 48 1020"/></svg>
 
-<header class="hero">
-  <div class="wrap">
-    <div class="label">Study 01</div>
-    <h1>Mapping the Moon’s minerals and caves (physically)</h1>
-    <p class="lede">Every method used so far to find what the Moon is made of and where it is hollow, and what each one found. Status on 6 November 2026.</p>
-  </div>
+<header class="top wrap">
+  <nav aria-label="Tav">
+    <a class="brand" href="tav.html"><img src="img/tav-banner.png" width="1960" height="480" alt="Tav"></a>
+    <div class="links">
+      <a href="https://github.com/Jules1052/tav">GitHub ↗</a>
+    </div>
+    <a class="btn violet" href="tav-app.html">Open the map</a>
+  </nav>
 </header>
 
 <main class="wrap">
 
+  <div class="page-head">
+    <h1>Mapping the Moon’s minerals and caves</h1>
+    <p class="lede">Every method used so far to find what the Moon is made of and where it is hollow, and what each one found. Status on 6 November 2026.</p>
+    <nav class="toc" aria-label="Sections">
+      <a href="#methods">Methods</a><a href="#minerals">Minerals</a><a href="#water">Water</a><a href="#caves">Caves</a><a href="#next">Next</a><a href="#sources">Sources</a>
+    </nav>
+  </div>
+
   <section id="methods">
-    <div class="head"><span class="label">01</span><h2>Methods</h2></div>
+    <div class="head"><span class="label num">01</span><h2>Methods</h2>
+      <p>Nine ways of looking, from the top microns of the soil to kilometres down.</p></div>
     <div class="scroll"><table class="stack">
-      <tr><th>Technique</th><th>Detects</th><th>Depth reached</th><th>Flown on</th></tr>
-      <tr><td>Reflectance spectroscopy, UV to near-IR</td><td data-th="Detects">Pyroxene, olivine, plagioclase, spinel, Fe and Ti oxides, OH / H₂O</td><td data-th="Depth reached">Top microns</td><td data-th="Flown on">Clementine, Kaguya, M³, LROC WAC, IIRS</td></tr>
-      <tr><td>Thermal infrared</td><td data-th="Detects">Silica content, surface temperature, cold traps</td><td data-th="Depth reached">Top millimetres</td><td data-th="Flown on">LRO Diviner</td></tr>
-      <tr><td>Gamma-ray spectroscopy</td><td data-th="Detects">Th, K, U, Fe, Ti</td><td data-th="Depth reached">~30 cm</td><td data-th="Flown on">Apollo 15–16, Lunar Prospector, Kaguya, Danuri</td></tr>
-      <tr><td>Neutron spectroscopy</td><td data-th="Detects">Hydrogen</td><td data-th="Depth reached">~1 m</td><td data-th="Flown on">Lunar Prospector, LRO LEND</td></tr>
-      <tr><td>X-ray fluorescence</td><td data-th="Detects">Mg, Al, Si, Ca, Fe, Na</td><td data-th="Depth reached">Top microns</td><td data-th="Flown on">Apollo 15–16, SMART-1, Chandrayaan-1 and -2</td></tr>
-      <tr><td>Radar imaging and sounding</td><td data-th="Detects">Ice candidates, buried voids, layer boundaries</td><td data-th="Depth reached">Metres to kilometres</td><td data-th="Flown on">Mini-SAR, Mini-RF, Kaguya LRS, DFSAR</td></tr>
-      <tr><td>Gravity gradiometry</td><td data-th="Detects">Missing mass, empty tubes</td><td data-th="Depth reached">Kilometres</td><td data-th="Flown on">GRAIL</td></tr>
-      <tr><td>High-resolution imaging</td><td data-th="Detects">Pits, overhangs, collapsed channels</td><td data-th="Depth reached">Surface</td><td data-th="Flown on">Lunar Orbiter, Kaguya TC, LROC NAC</td></tr>
-      <tr><td>In situ and returned samples</td><td data-th="Detects">Exact mineralogy, ages, isotopes, water content</td><td data-th="Depth reached">Up to 3 m (Apollo drill cores)</td><td data-th="Flown on">Surveyor, Apollo, Luna, Chang'e, Chandrayaan-3</td></tr>
+      <thead><tr><th scope="col">Technique</th><th scope="col">Detects</th><th scope="col">Depth reached</th><th scope="col">Flown on</th></tr></thead>
+      <tbody>
+        <tr><td>Reflectance spectroscopy, UV to near-IR</td><td data-th="Detects">Pyroxene, olivine, plagioclase, spinel, Fe and Ti oxides, OH / H₂O</td><td data-th="Depth reached">Top microns</td><td data-th="Flown on">Clementine, Kaguya, M³, LROC WAC, IIRS</td></tr>
+        <tr><td>Thermal infrared</td><td data-th="Detects">Silica content, surface temperature, cold traps</td><td data-th="Depth reached">Top millimetres</td><td data-th="Flown on">LRO Diviner</td></tr>
+        <tr><td>Gamma-ray spectroscopy</td><td data-th="Detects">Th, K, U, Fe, Ti</td><td data-th="Depth reached">~30 cm</td><td data-th="Flown on">Apollo 15–16, Lunar Prospector, Kaguya, Danuri</td></tr>
+        <tr><td>Neutron spectroscopy</td><td data-th="Detects">Hydrogen</td><td data-th="Depth reached">~1 m</td><td data-th="Flown on">Lunar Prospector, LRO LEND</td></tr>
+        <tr><td>X-ray fluorescence</td><td data-th="Detects">Mg, Al, Si, Ca, Fe, Na</td><td data-th="Depth reached">Top microns</td><td data-th="Flown on">Apollo 15–16, SMART-1, Chandrayaan-1 and -2</td></tr>
+        <tr><td>Radar imaging and sounding</td><td data-th="Detects">Ice candidates, buried voids, layer boundaries</td><td data-th="Depth reached">Metres to kilometres</td><td data-th="Flown on">Mini-SAR, Mini-RF, Kaguya LRS, DFSAR</td></tr>
+        <tr><td>Gravity gradiometry</td><td data-th="Detects">Missing mass, empty tubes</td><td data-th="Depth reached">Kilometres</td><td data-th="Flown on">GRAIL</td></tr>
+        <tr><td>High-resolution imaging</td><td data-th="Detects">Pits, overhangs, collapsed channels</td><td data-th="Depth reached">Surface</td><td data-th="Flown on">Lunar Orbiter, Kaguya TC, LROC NAC</td></tr>
+        <tr><td>In situ and returned samples</td><td data-th="Detects">Exact mineralogy, ages, isotopes, water content</td><td data-th="Depth reached">Up to 3 m (Apollo drill cores)</td><td data-th="Flown on">Surveyor, Apollo, Luna, Chang'e, Chandrayaan-3</td></tr>
+      </tbody>
     </table></div>
   </section>
 
   <section id="minerals">
-    <div class="head"><span class="label">02</span><h2>Minerals</h2></div>
+    <div class="head"><span class="label num">02</span><h2>Minerals</h2>
+      <p>Highlands of anorthosite, maria of basalt, and one nearside region rich in thorium: first from samples, then mapped from orbit.</p></div>
 
-    <span class="label sub">Samples in hand</span>
-    <ul class="log">
-      <li><span class="label"><i class="when">1969–72</i>Apollo 11–17</span><p>382 kg of rock and soil from six nearside sites.</p></li>
-      <li><span class="label">Apollo result</span><p>Highlands are anorthosite (calcium-rich plagioclase); maria are basalt (pyroxene, plagioclase, olivine, ilmenite). This is the evidence for a global magma ocean.</p></li>
-      <li><span class="label">Apollo result</span><p>Three minerals first described from lunar samples: armalcolite, tranquillityite, pyroxferroite.</p></li>
-      <li><span class="label">Apollo result</span><p>KREEP identified: material rich in potassium, rare-earth elements and phosphorus, the last liquid of the magma ocean.</p></li>
-      <li><span class="label"><i class="when">1970–76</i>Luna 16, 20, 24</span><p>About 300 g returned robotically from three eastern nearside sites.</p></li>
-      <li><span class="label"><i class="when">2020</i>Chang'e-5</span><p>1,731 g from Oceanus Procellarum. Basalts dated to about 2.0 billion years, the youngest returned so far.</p></li>
-      <li><span class="label"><i class="when">2022</i>Chang'e-5</span><p>Changesite-(Y), a new phosphate mineral, approved as the sixth mineral discovered on the Moon.</p></li>
-      <li><span class="label"><i class="when">2024</i>Chang'e-6</span><p>1,935.3 g from the South Pole–Aitken basin: the first samples from the farside. <a class="src" href="https://english.cas.cn/head/202503/t20250327_908846.shtml">Source</a></p></li>
-      <li><span class="label"><i class="when">2024–25</i>Chang'e-6</span><p>Farside volcanism dated at 4.2 and 2.8 billion years; basalt source mantle holds 1–1.5 µg/g water, drier than the nearside. <a class="src" href="https://astrobiology.com/2025/04/15/water-abundance-in-the-mantle-of-the-moons-farside/">Source</a></p></li>
-    </ul>
+    <div class="group">
+      <span class="label">Samples in hand</span>
+      <ul class="log">
+        <li><span class="when">1969–72</span><span class="who">Apollo 11–17</span><p>382 kg of rock and soil from six nearside sites.</p></li>
+        <li><span class="when"></span><span class="who">Apollo result</span><p>Highlands are anorthosite (calcium-rich plagioclase); maria are basalt (pyroxene, plagioclase, olivine, ilmenite). This is the evidence for a global magma ocean.</p></li>
+        <li><span class="when"></span><span class="who">Apollo result</span><p>Three minerals first described from lunar samples: armalcolite, tranquillityite, pyroxferroite.</p></li>
+        <li><span class="when"></span><span class="who">Apollo result</span><p>KREEP identified: material rich in potassium, rare-earth elements and phosphorus, the last liquid of the magma ocean.</p></li>
+        <li><span class="when">1970–76</span><span class="who">Luna 16, 20, 24</span><p>About 300 g returned robotically from three eastern nearside sites.</p></li>
+        <li><span class="when">2020</span><span class="who">Chang'e-5</span><p>1,731 g from Oceanus Procellarum. Basalts dated to about 2.0 billion years, the youngest returned so far.</p></li>
+        <li><span class="when">2022</span><span class="who">Chang'e-5</span><p>Changesite-(Y), a new phosphate mineral, approved as the sixth mineral discovered on the Moon.</p></li>
+        <li><span class="when">2024</span><span class="who">Chang'e-6</span><p>1,935.3 g from the South Pole–Aitken basin: the first samples from the farside. <a class="src" href="https://english.cas.cn/head/202503/t20250327_908846.shtml">Source</a></p></li>
+        <li><span class="when">2024–25</span><span class="who">Chang'e-6</span><p>Farside volcanism dated at 4.2 and 2.8 billion years; basalt source mantle holds 1–1.5 µg/g water, drier than the nearside. <a class="src" href="https://astrobiology.com/2025/04/15/water-abundance-in-the-mantle-of-the-moons-farside/">Source</a></p></li>
+      </ul>
+    </div>
 
-    <span class="label sub mt">From orbit and from Earth</span>
-    <ul class="log">
-      <li><span class="label"><i class="when">1960s–70s</i>Telescopes</span><p>Visible and near-infrared reflectance spectra separate high-titanium from low-titanium maria before any global orbiter.</p></li>
-      <li><span class="label"><i class="when">1971–72</i>Apollo 15, 16</span><p>Orbital X-ray and gamma-ray spectrometers map Al/Si, Mg/Si and thorium along the equatorial ground tracks.</p></li>
-      <li><span class="label"><i class="when">1990, 1992</i>Galileo</span><p>Multispectral flyby images show the South Pole–Aitken basin as an iron-rich anomaly on the farside.</p></li>
-      <li><span class="label"><i class="when">1994</i>Clementine</span><p>First global multispectral map: 11 bands from ultraviolet to near-infrared at 100–200 m per pixel. First global iron and titanium oxide maps.</p></li>
-      <li><span class="label"><i class="when">1998–99</i>Lunar Prospector</span><p>Gamma-ray spectrometer maps thorium, potassium and iron globally. Thorium concentrates in one nearside region, the Procellarum KREEP Terrane.</p></li>
-      <li><span class="label"><i class="when">2003–06</i>SMART-1</span><p>Compact X-ray spectrometer D-CIXS measures Mg, Al, Si, Ca and Fe during solar flares.</p></li>
-      <li><span class="label"><i class="when">2007–09</i>Kaguya</span><p>Multiband Imager and Spectral Profiler find pure anorthosite (over 98% plagioclase) in crater central peaks across the highlands.</p></li>
-      <li><span class="label"><i class="when">2007–09</i>Kaguya</span><p>Olivine-rich exposures located around large impact basins; gamma-ray spectrometer produces the first global uranium map.</p></li>
-      <li><span class="label"><i class="when">2007–09</i>Chang'e-1</span><p>First microwave radiometer in lunar orbit; brightness temperatures used to estimate regolith thickness and the helium-3 inventory.</p></li>
-      <li><span class="label"><i class="when">2008–09</i>Chandrayaan-1 M³</span><p>Moon Mineralogy Mapper: 85 bands, 0.43–3.0 µm, 140 m per pixel, near-global. The reference mineral map still in use.</p></li>
-      <li><span class="label"><i class="when">2011</i>M³ result</span><p>New rock type identified from orbit: magnesium-spinel anorthosite, never found in the sample collection.</p></li>
-      <li><span class="label"><i class="when">2009–</i>LRO Diviner</span><p>Thermal infrared maps silicate composition. Silica-rich, granite-like volcanic domes confirmed at Gruithuisen and Compton–Belkovich.</p></li>
-      <li><span class="label"><i class="when">2009–</i>LROC WAC</span><p>Seven-band camera (321–689 nm) yields a titanium dioxide map of the maria at about 400 m per pixel.</p></li>
-      <li><span class="label"><i class="when">2019–</i>Chandrayaan-2</span><p>CLASS X-ray spectrometer produces the first global sodium map; IIRS extends spectra to 5 µm.</p></li>
-      <li><span class="label"><i class="when">2022–</i>Danuri</span><p>Korean orbiter carries a gamma-ray spectrometer and ShadowCam, which images inside permanently shadowed craters.</p></li>
-    </ul>
+    <div class="group">
+      <span class="label">From orbit and from Earth</span>
+      <ul class="log">
+        <li><span class="when">1960s–70s</span><span class="who">Telescopes</span><p>Visible and near-infrared reflectance spectra separate high-titanium from low-titanium maria before any global orbiter.</p></li>
+        <li><span class="when">1971–72</span><span class="who">Apollo 15, 16</span><p>Orbital X-ray and gamma-ray spectrometers map Al/Si, Mg/Si and thorium along the equatorial ground tracks.</p></li>
+        <li><span class="when">1990, 1992</span><span class="who">Galileo</span><p>Multispectral flyby images show the South Pole–Aitken basin as an iron-rich anomaly on the farside.</p></li>
+        <li><span class="when">1994</span><span class="who">Clementine</span><p>First global multispectral map: 11 bands from ultraviolet to near-infrared at 100–200 m per pixel. First global iron and titanium oxide maps.</p></li>
+        <li><span class="when">1998–99</span><span class="who">Lunar Prospector</span><p>Gamma-ray spectrometer maps thorium, potassium and iron globally. Thorium concentrates in one nearside region, the Procellarum KREEP Terrane.</p></li>
+        <li><span class="when">2003–06</span><span class="who">SMART-1</span><p>Compact X-ray spectrometer D-CIXS measures Mg, Al, Si, Ca and Fe during solar flares.</p></li>
+        <li><span class="when">2007–09</span><span class="who">Kaguya</span><p>Multiband Imager and Spectral Profiler find pure anorthosite (over 98% plagioclase) in crater central peaks across the highlands.</p></li>
+        <li><span class="when">2007–09</span><span class="who">Kaguya</span><p>Olivine-rich exposures located around large impact basins; gamma-ray spectrometer produces the first global uranium map.</p></li>
+        <li><span class="when">2007–09</span><span class="who">Chang'e-1</span><p>First microwave radiometer in lunar orbit; brightness temperatures used to estimate regolith thickness and the helium-3 inventory.</p></li>
+        <li><span class="when">2008–09</span><span class="who">Chandrayaan-1 M³</span><p>Moon Mineralogy Mapper: 85 bands, 0.43–3.0 µm, 140 m per pixel, near-global. The reference mineral map still in use.</p></li>
+        <li><span class="when">2011</span><span class="who">M³ result</span><p>New rock type identified from orbit: magnesium-spinel anorthosite, never found in the sample collection.</p></li>
+        <li><span class="when">2009–</span><span class="who">LRO Diviner</span><p>Thermal infrared maps silicate composition. Silica-rich, granite-like volcanic domes confirmed at Gruithuisen and Compton–Belkovich.</p></li>
+        <li><span class="when">2009–</span><span class="who">LROC WAC</span><p>Seven-band camera (321–689 nm) yields a titanium dioxide map of the maria at about 400 m per pixel.</p></li>
+        <li><span class="when">2019–</span><span class="who">Chandrayaan-2</span><p>CLASS X-ray spectrometer produces the first global sodium map; IIRS extends spectra to 5 µm.</p></li>
+        <li><span class="when">2022–</span><span class="who">Danuri</span><p>Korean orbiter carries a gamma-ray spectrometer and ShadowCam, which images inside permanently shadowed craters.</p></li>
+      </ul>
+    </div>
 
-    <div class="figs mt">
-      <figure><a href="img/thorium.jpg"><img src="img/thorium.jpg" width="1280" height="670" loading="lazy" alt="Two lunar hemispheres coloured by thorium concentration; high values cluster on the western nearside"></a>
+    <div class="figs">
+      <figure class="fig"><a href="img/thorium.jpg"><img src="img/thorium.jpg" width="1280" height="670" loading="lazy" alt="Two lunar hemispheres coloured by thorium concentration; high values cluster on the western nearside"></a>
         <figcaption class="label">Thorium from Lunar Prospector, nearside left, farside right</figcaption></figure>
-      <figure><a href="img/galileo-false-color.jpg"><img src="img/galileo-false-color.jpg" width="960" height="968" loading="lazy" alt="False-colour mosaic of the Moon from Galileo"></a>
+      <figure class="fig"><a href="img/galileo-false-color.jpg"><img src="img/galileo-false-color.jpg" width="960" height="968" loading="lazy" alt="False-colour mosaic of the Moon from Galileo"></a>
         <figcaption class="label">Galileo, 1992: pink highlands, blue titanium-rich basalt, orange titanium-poor basalt</figcaption></figure>
     </div>
 
-    <span class="label sub mt">On the surface</span>
-    <ul class="log">
-      <li><span class="label"><i class="when">1967–68</i>Surveyor 5, 6, 7</span><p>Alpha-scattering instruments make the first chemical analyses on the Moon: maria are basaltic, highlands aluminium-rich.</p></li>
-      <li><span class="label"><i class="when">1970–73</i>Lunokhod 1, 2</span><p>Rover-mounted X-ray fluorescence spectrometers measure soil chemistry along the traverses.</p></li>
-      <li><span class="label"><i class="when">2013</i>Chang'e-3</span><p>Yutu rover (X-ray and infrared spectrometers) finds a young basalt type in Mare Imbrium unlike any returned sample.</p></li>
-      <li><span class="label"><i class="when">2019–</i>Chang'e-4</span><p>Yutu-2, first rover on the farside, detects olivine and low-calcium pyroxene in Von Kármán crater, possibly excavated from the mantle.</p></li>
-      <li><span class="label"><i class="when">2023</i>Chandrayaan-3</span><p>Pragyan rover at 69° S: laser spectrometer confirms sulfur in situ, with Al, Ca, Fe, Cr, Ti, Mn, Si and O. <a class="src" href="https://www.space.com/chandrayaan-3-sulfur-surprising-composition-lunar-south-pole-soil">Source</a></p></li>
-    </ul>
+    <div class="group">
+      <span class="label">On the surface</span>
+      <ul class="log">
+        <li><span class="when">1967–68</span><span class="who">Surveyor 5, 6, 7</span><p>Alpha-scattering instruments make the first chemical analyses on the Moon: maria are basaltic, highlands aluminium-rich.</p></li>
+        <li><span class="when">1970–73</span><span class="who">Lunokhod 1, 2</span><p>Rover-mounted X-ray fluorescence spectrometers measure soil chemistry along the traverses.</p></li>
+        <li><span class="when">2013</span><span class="who">Chang'e-3</span><p>Yutu rover (X-ray and infrared spectrometers) finds a young basalt type in Mare Imbrium unlike any returned sample.</p></li>
+        <li><span class="when">2019–</span><span class="who">Chang'e-4</span><p>Yutu-2, first rover on the farside, detects olivine and low-calcium pyroxene in Von Kármán crater, possibly excavated from the mantle.</p></li>
+        <li><span class="when">2023</span><span class="who">Chandrayaan-3</span><p>Pragyan rover at 69° S: laser spectrometer confirms sulfur in situ, with Al, Ca, Fe, Cr, Ti, Mn, Si and O. <a class="src" href="https://www.space.com/chandrayaan-3-sulfur-surprising-composition-lunar-south-pole-soil">Source</a></p></li>
+      </ul>
+    </div>
   </section>
 
   <section id="water">
-    <div class="head"><span class="label">03</span><h2>Water and volatiles</h2></div>
-    <ul class="log">
-      <li><span class="label"><i class="when">1994</i>Clementine</span><p>Bistatic radar experiment suggests ice near the south pole. Result contested.</p></li>
-      <li><span class="label"><i class="when">1998</i>Lunar Prospector</span><p>Neutron spectrometer detects excess hydrogen at both poles.</p></li>
-      <li><span class="label"><i class="when">1999</i>Lunar Prospector</span><p>Deliberate crash into a south-polar crater. No water detected in the plume.</p></li>
-      <li><span class="label"><i class="when">2009</i>M³, Cassini, Deep Impact</span><p>Three spacecraft see the 2.8–3.0 µm absorption of OH / H₂O across the sunlit surface, strongest at high latitude.</p></li>
-      <li><span class="label"><i class="when">2009</i>LCROSS</span><p>Impactor strikes the permanently shadowed crater Cabeus. Ejecta contain 5.6 ± 2.9% water by mass, plus CO, H₂S, NH₃ and mercury. <a class="src" href="https://www.astronomy.com/space-exploration/water-in-moon-crater-lcross-impact-reveals/">Source</a></p></li>
-      <li><span class="label"><i class="when">2009–</i>Mini-SAR, Mini-RF</span><p>Radar finds polar craters with ice-like polarisation. Rough rock gives the same signal; ambiguous.</p></li>
-      <li><span class="label"><i class="when">2018</i>M³ reanalysis</span><p>First direct detection of surface ice: near-infrared ice absorptions in permanently shadowed craters within 20° of both poles, in about 3.5% of cold traps. <a class="src" href="https://www.sci.news/space/direct-evidence-water-ice-moons-polar-regions-06327.html">Source</a></p></li>
-      <li><span class="label"><i class="when">2020</i>SOFIA</span><p>Airborne telescope detects molecular H₂O at 6 µm in sunlit soil at Clavius: 100–412 ppm. <a class="src" href="https://www.sci.news/astronomy/molecular-water-moon-08987.html">Source</a></p></li>
-      <li><span class="label"><i class="when">2023</i>Chang'e-5 samples</span><p>Impact glass beads in the soil hold solar-wind-derived water.</p></li>
-      <li><span class="label"><i class="when">2022–23</i>LunaH-Map, Lunar Flashlight</span><p>Two NASA cubesats built to map polar hydrogen and ice. Propulsion faults: neither reached lunar orbit. <b class="flag">Failed</b></p></li>
-      <li><span class="label"><i class="when">2025</i>PRIME-1 on IM-2</span><p>First ice-drilling attempt. Lander came to rest on its side on 6 March; the drill moved through its full range but never reached soil. <b class="flag">Not achieved</b> <a class="src" href="https://spacepolicyonline.com/news/im-2-mission-ends-one-day-after-lunar-landing/">Source</a></p></li>
-      <li><span class="label"><i class="when">2025</i>Lunar Trailblazer</span><p>Orbiter built to map the form and abundance of water. Contact lost a day after launch; mission ended 31 July 2025. <b class="flag">Lost</b></p></li>
-    </ul>
-    <div class="figs mt">
-      <figure><a href="img/polar-ice.webp"><img src="img/polar-ice.webp" width="1280" height="632" loading="lazy" alt="Polar maps of the Moon with surface ice detections marked in the coldest craters"></a>
+    <div class="head"><span class="label num">03</span><h2>Water and volatiles</h2>
+      <p>Hydrogen at both poles, ice in the coldest craters, traces of water in sunlit soil. Three missions built to measure it more closely were lost.</p></div>
+    <div class="group">
+      <ul class="log">
+        <li><span class="when">1994</span><span class="who">Clementine</span><p>Bistatic radar experiment suggests ice near the south pole. Result contested.</p></li>
+        <li><span class="when">1998</span><span class="who">Lunar Prospector</span><p>Neutron spectrometer detects excess hydrogen at both poles.</p></li>
+        <li><span class="when">1999</span><span class="who">Lunar Prospector</span><p>Deliberate crash into a south-polar crater. No water detected in the plume.</p></li>
+        <li><span class="when">2009</span><span class="who">M³, Cassini, Deep Impact</span><p>Three spacecraft see the 2.8–3.0 µm absorption of OH / H₂O across the sunlit surface, strongest at high latitude.</p></li>
+        <li><span class="when">2009</span><span class="who">LCROSS</span><p>Impactor strikes the permanently shadowed crater Cabeus. Ejecta contain 5.6 ± 2.9% water by mass, plus CO, H₂S, NH₃ and mercury. <a class="src" href="https://www.astronomy.com/space-exploration/water-in-moon-crater-lcross-impact-reveals/">Source</a></p></li>
+        <li><span class="when">2009–</span><span class="who">Mini-SAR, Mini-RF</span><p>Radar finds polar craters with ice-like polarisation. Rough rock gives the same signal; ambiguous.</p></li>
+        <li><span class="when">2018</span><span class="who">M³ reanalysis</span><p>First direct detection of surface ice: near-infrared ice absorptions in permanently shadowed craters within 20° of both poles, in about 3.5% of cold traps. <a class="src" href="https://www.sci.news/space/direct-evidence-water-ice-moons-polar-regions-06327.html">Source</a></p></li>
+        <li><span class="when">2020</span><span class="who">SOFIA</span><p>Airborne telescope detects molecular H₂O at 6 µm in sunlit soil at Clavius: 100–412 ppm. <a class="src" href="https://www.sci.news/astronomy/molecular-water-moon-08987.html">Source</a></p></li>
+        <li><span class="when">2023</span><span class="who">Chang'e-5 samples</span><p>Impact glass beads in the soil hold solar-wind-derived water.</p></li>
+        <li><span class="when">2022–23</span><span class="who">LunaH-Map, Lunar Flashlight</span><p>Two NASA cubesats built to map polar hydrogen and ice. Propulsion faults: neither reached lunar orbit. <b class="flag bad">Failed</b></p></li>
+        <li><span class="when">2025</span><span class="who">PRIME-1 on IM-2</span><p>First ice-drilling attempt. Lander came to rest on its side on 6 March; the drill moved through its full range but never reached soil. <b class="flag bad">Not achieved</b> <a class="src" href="https://spacepolicyonline.com/news/im-2-mission-ends-one-day-after-lunar-landing/">Source</a></p></li>
+        <li><span class="when">2025</span><span class="who">Lunar Trailblazer</span><p>Orbiter built to map the form and abundance of water. Contact lost a day after launch; mission ended 31 July 2025. <b class="flag bad">Lost</b></p></li>
+      </ul>
+    </div>
+    <div class="figs">
+      <figure class="fig"><a href="img/polar-ice.webp"><img src="img/polar-ice.webp" width="1280" height="632" loading="lazy" alt="Polar maps of the Moon with surface ice detections marked in the coldest craters"></a>
         <figcaption class="label">Surface ice from M³ as coloured dots, south pole left, north pole right</figcaption></figure>
-      <figure><a href="img/m3-water.jpg"><img src="img/m3-water.jpg" width="960" height="960" loading="lazy" alt="Moon Mineralogy Mapper image strips; blue toward the poles"></a>
+      <figure class="fig"><a href="img/m3-water.jpg"><img src="img/m3-water.jpg" width="960" height="960" loading="lazy" alt="Moon Mineralogy Mapper image strips; blue toward the poles"></a>
         <figcaption class="label">M³, 2009: blue is OH or H₂O, red is iron-bearing pyroxene</figcaption></figure>
     </div>
   </section>
 
   <section id="caves">
-    <div class="head"><span class="label">04</span><h2>Caves</h2></div>
-    <ul class="log">
-      <li><span class="label"><i class="when">1966–67</i>Lunar Orbiter</span><p>Photographs of sinuous rilles lead to the hypothesis that they are lava channels and collapsed lava tubes.</p></li>
-      <li><span class="label"><i class="when">1971</i>Apollo 15</span><p>Astronauts reach the edge of Hadley Rille, about 1.5 km wide and 300 m deep, and photograph layered basalt in its wall.</p></li>
-      <li><span class="label"><i class="when">2009</i>Kaguya</span><p>Terrain Camera finds the Marius Hills Hole, the first known skylight: a vertical pit about 65 m across in a rille.</p></li>
-      <li><span class="label"><i class="when">2009–10</i>Kaguya</span><p>Two more pits found, in Mare Tranquillitatis and Mare Ingenii. <a class="src" href="https://lroc.im-ldi.com/posts/200">Source</a></p></li>
-      <li><span class="label"><i class="when">2010–12</i>LROC NAC</span><p>0.5 m per pixel images taken at an angle show layered walls and floors that continue under the rim: overhangs of 20 m and more.</p></li>
-      <li><span class="label"><i class="when">2014</i>LROC NAC</span><p>Automated search of the image archive finds over 200 pits. Most are in impact-melt ponds; under ten are in mare lava.</p></li>
-      <li><span class="label"><i class="when">2021</i>LROC</span><p>Lunar Pit Atlas published: 281 pits with position, size and depth. <a class="src" href="https://www.lroc.asu.edu/atlases">Source</a></p></li>
-      <li><span class="label"><i class="when">2017</i>GRAIL</span><p>Gravity gradients show long, narrow mass deficits under the maria, consistent with buried empty tubes over 1 km wide. <a class="src" href="https://digitalcommons.usf.edu/kip_articles/6189">Source</a></p></li>
-      <li><span class="label"><i class="when">2017</i>Kaguya radar</span><p>Lunar Radar Sounder records a double echo (roof, then floor) near the Marius Hills Hole, matching a GRAIL mass deficit. Indicated tube length: tens of kilometres. <a class="src" href="https://www.isas.jaxa.jp/en/topics/001159.html">Source</a></p></li>
-      <li><span class="label"><i class="when">2017</i>Modelling</span><p>Structural analysis: in lunar gravity a lava tube could stay standing at widths of kilometres.</p></li>
-      <li><span class="label"><i class="when">2022</i>LRO Diviner</span><p>Shaded floor of the Mare Tranquillitatis pit holds near 17 °C through the lunar day. Open surface swings from 127 °C to −173 °C. <a class="src" href="https://www.eurekalert.org/news-releases/959966">Source</a></p></li>
-      <li><span class="label"><i class="when">2024</i>LRO Mini-RF</span><p>Reanalysis of 2010 radar images: a conduit leaves the Mare Tranquillitatis pit at 130–170 m depth, 30–80 m long and about 45 m wide. First radar evidence of an accessible cave. <a class="src" href="https://doi.org/10.1038/s41550-024-02302-y">Source</a></p></li>
-      <li><span class="label"><i class="when">2025</i>Machine learning</span><p>Deep-learning search of orbital images reports new candidate cave entrances beyond the atlas. <a class="src" href="https://kar.kent.ac.uk/110353/1/New%20candidate%20cave%20entrances%20on%20the%20Moon%20found%20using%20deep%20learning.pdf">Source</a></p></li>
-      <li><span class="label">Status</span><p>No spacecraft has entered a lunar cave or imaged one from inside. Every tube detection is indirect. <b class="flag">Unconfirmed</b></p></li>
-    </ul>
+    <div class="head"><span class="label num">04</span><h2>Caves</h2>
+      <p>Skylights into lava tubes, seen from above since 2009. Radar and gravity point to conduits below; nothing has gone inside.</p></div>
+    <div class="group">
+      <ul class="log">
+        <li><span class="when">1966–67</span><span class="who">Lunar Orbiter</span><p>Photographs of sinuous rilles lead to the hypothesis that they are lava channels and collapsed lava tubes.</p></li>
+        <li><span class="when">1971</span><span class="who">Apollo 15</span><p>Astronauts reach the edge of Hadley Rille, about 1.5 km wide and 300 m deep, and photograph layered basalt in its wall.</p></li>
+        <li><span class="when">2009</span><span class="who">Kaguya</span><p>Terrain Camera finds the Marius Hills Hole, the first known skylight: a vertical pit about 65 m across in a rille.</p></li>
+        <li><span class="when">2009–10</span><span class="who">Kaguya</span><p>Two more pits found, in Mare Tranquillitatis and Mare Ingenii. <a class="src" href="https://lroc.im-ldi.com/posts/200">Source</a></p></li>
+        <li><span class="when">2010–12</span><span class="who">LROC NAC</span><p>0.5 m per pixel images taken at an angle show layered walls and floors that continue under the rim: overhangs of 20 m and more.</p></li>
+        <li><span class="when">2014</span><span class="who">LROC NAC</span><p>Automated search of the image archive finds over 200 pits. Most are in impact-melt ponds; under ten are in mare lava.</p></li>
+        <li><span class="when">2017</span><span class="who">GRAIL</span><p>Gravity gradients show long, narrow mass deficits under the maria, consistent with buried empty tubes over 1 km wide. <a class="src" href="https://digitalcommons.usf.edu/kip_articles/6189">Source</a></p></li>
+        <li><span class="when">2017</span><span class="who">Kaguya radar</span><p>Lunar Radar Sounder records a double echo (roof, then floor) near the Marius Hills Hole, matching a GRAIL mass deficit. Indicated tube length: tens of kilometres. <a class="src" href="https://www.isas.jaxa.jp/en/topics/001159.html">Source</a></p></li>
+        <li><span class="when">2017</span><span class="who">Modelling</span><p>Structural analysis: in lunar gravity a lava tube could stay standing at widths of kilometres.</p></li>
+        <li><span class="when">2021</span><span class="who">LROC</span><p>Lunar Pit Atlas published: 281 pits with position, size and depth. <a class="src" href="https://www.lroc.asu.edu/atlases">Source</a></p></li>
+        <li><span class="when">2022</span><span class="who">LRO Diviner</span><p>Shaded floor of the Mare Tranquillitatis pit holds near 17 °C through the lunar day. Open surface swings from 127 °C to −173 °C. <a class="src" href="https://www.eurekalert.org/news-releases/959966">Source</a></p></li>
+        <li><span class="when">2024</span><span class="who">LRO Mini-RF</span><p>Reanalysis of 2010 radar images: a conduit leaves the Mare Tranquillitatis pit at 130–170 m depth, 30–80 m long and about 45 m wide. First radar evidence of an accessible cave. <a class="src" href="https://doi.org/10.1038/s41550-024-02302-y">Source</a></p></li>
+        <li><span class="when">2025</span><span class="who">Machine learning</span><p>Deep-learning search of orbital images reports new candidate cave entrances beyond the atlas. <a class="src" href="https://kar.kent.ac.uk/110353/1/New%20candidate%20cave%20entrances%20on%20the%20Moon%20found%20using%20deep%20learning.pdf">Source</a></p></li>
+        <li><span class="when">Today</span><span class="who">Status</span><p>No spacecraft has entered a lunar cave or imaged one from inside. Every tube detection is indirect. <b class="flag">Unconfirmed</b></p></li>
+      </ul>
+    </div>
 
-    <div class="scroll mt"><table class="stack">
-      <tr><th>Pit</th><th>Location</th><th>Opening</th><th>Depth</th><th>Evidence of a cave</th></tr>
-      <tr><td>Marius Hills</td><td data-th="Location">14.09° N 303.23° E</td><td data-th="Opening">~58 × 49 m</td><td data-th="Depth">~40 m</td><td data-th="Evidence of a cave">Radar double echo, gravity deficit</td></tr>
-      <tr><td>Mare Tranquillitatis</td><td data-th="Location">8.34° N 33.22° E</td><td data-th="Opening">~98 × 84 m</td><td data-th="Depth">~105 m</td><td data-th="Evidence of a cave">Overhang imaged, radar conduit</td></tr>
-      <tr><td>Mare Ingenii</td><td data-th="Location">35.95° S 166.06° E</td><td data-th="Opening">~118 × 68 m</td><td data-th="Depth">~45–65 m</td><td data-th="Evidence of a cave">Overhang imaged</td></tr>
+    <div class="scroll mt-card"><table class="stack">
+      <thead><tr><th scope="col">Pit</th><th scope="col">Location</th><th scope="col">Opening</th><th scope="col">Depth</th><th scope="col">Evidence of a cave</th></tr></thead>
+      <tbody>
+        <tr><td>Marius Hills</td><td data-th="Location">14.09° N 303.23° E</td><td data-th="Opening">~58 × 49 m</td><td data-th="Depth">~40 m</td><td data-th="Evidence of a cave">Radar double echo, gravity deficit</td></tr>
+        <tr><td>Mare Tranquillitatis</td><td data-th="Location">8.34° N 33.22° E</td><td data-th="Opening">~98 × 84 m</td><td data-th="Depth">~105 m</td><td data-th="Evidence of a cave">Overhang imaged, radar conduit</td></tr>
+        <tr><td>Mare Ingenii</td><td data-th="Location">35.95° S 166.06° E</td><td data-th="Opening">~118 × 68 m</td><td data-th="Depth">~45–65 m</td><td data-th="Evidence of a cave">Overhang imaged</td></tr>
+      </tbody>
     </table></div>
     <p class="note">Dimensions from LROC shadow measurements; published values differ by source and lighting.</p>
 
-    <div class="figs four mt">
-      <figure><a href="img/hadley-rille.jpg"><img src="img/hadley-rille.jpg" width="960" height="950" loading="lazy" alt="Hadley Rille winding across a lava plain, seen from orbit"></a>
+    <div class="figs four">
+      <figure class="fig"><a href="img/hadley-rille.jpg"><img src="img/hadley-rille.jpg" width="960" height="950" loading="lazy" alt="Hadley Rille winding across a lava plain, seen from orbit"></a>
         <figcaption class="label">Hadley Rille from Apollo 15, 1971</figcaption></figure>
-      <figure><a href="img/marius-pit.png"><img src="img/marius-pit.png" width="800" height="800" loading="lazy" alt="Marius Hills pit, a dark vertical hole in mare lava"></a>
+      <figure class="fig"><a href="img/marius-pit.png"><img src="img/marius-pit.png" width="800" height="800" loading="lazy" alt="Marius Hills pit, a dark vertical hole in mare lava"></a>
         <figcaption class="label">Marius Hills pit, in a rille</figcaption></figure>
-      <figure><a href="img/tranquillitatis-pit.jpg"><img src="img/tranquillitatis-pit.jpg" width="800" height="800" loading="lazy" alt="Mare Tranquillitatis pit with boulders on its sunlit floor"></a>
+      <figure class="fig"><a href="img/tranquillitatis-pit.jpg"><img src="img/tranquillitatis-pit.jpg" width="800" height="800" loading="lazy" alt="Mare Tranquillitatis pit with boulders on its sunlit floor"></a>
         <figcaption class="label">Mare Tranquillitatis pit</figcaption></figure>
-      <figure><a href="img/ingenii-pit.png"><img src="img/ingenii-pit.png" width="960" height="960" loading="lazy" alt="Mare Ingenii pit on the lunar farside"></a>
+      <figure class="fig"><a href="img/ingenii-pit.png"><img src="img/ingenii-pit.png" width="960" height="960" loading="lazy" alt="Mare Ingenii pit on the lunar farside"></a>
         <figcaption class="label">Mare Ingenii pit, farside</figcaption></figure>
     </div>
   </section>
 
   <section id="next">
-    <div class="head"><span class="label">05</span><h2>Next</h2></div>
-    <ul class="log">
-      <li><span class="label">GIMLI<i>NASA</i></span><p>Ground-penetrating radar, seismometers and a gravimeter on a commercial lander and rover at the Marius Hills pit, to settle whether it opens into a tube. No launch date. <b class="flag">Selected Sep 2026</b> <a class="src" href="https://www.psi.edu/blog/psi-led-team-selected-for-nasa-prism-program/">Source</a></p></li>
-      <li><span class="label">VIPER<i>NASA</i></span><p>Ice-prospecting rover with a 1 m drill for the south pole. Cancelled July 2024; reassigned to a Blue Origin lander. <b class="flag">Late 2027</b> <a class="src" href="https://www.nasa.gov/news-release/nasa-selects-blue-origin-to-deliver-viper-rover-to-moons-south-pole/">Source</a></p></li>
-      <li><span class="label">Chang'e-7<i>CNSA</i></span><p>Orbiter, lander, rover and a hopper carrying a water analyser into a shadowed crater near Shackleton. August 2026 launch called off. <b class="flag">Delayed to 2027</b> <a class="src" href="https://spacenews.com/china-delays-change-7-lunar-south-pole-landing-mission-launch/">Source</a></p></li>
-      <li><span class="label">LunarLeaper<i>ESA candidate</i></span><p>Legged robot of about 15 kg with radar and gravimeter, to walk the ground above the Marius Hills tube. <b class="flag">Not yet selected</b> <a class="src" href="https://www.sciencedirect.com/science/article/pii/S0094576525008082">Source</a></p></li>
-      <li><span class="label">Moon Diver, Daedalus</span><p>Earlier concepts to lower a tethered rover (NASA JPL) or an instrumented sphere (ESA study) into a pit. <b class="flag">Not funded</b></p></li>
-    </ul>
+    <div class="head"><span class="label num">05</span><h2>Next</h2>
+      <p>The missions that would settle the open questions: a tube under Marius Hills, and ice at the south pole.</p></div>
+    <div class="group">
+      <ul class="log nowhen">
+        <li><span class="who">GIMLI<i>NASA</i></span><p>Ground-penetrating radar, seismometers and a gravimeter on a commercial lander and rover at the Marius Hills pit, to settle whether it opens into a tube. No launch date. <b class="flag next">Selected Sep 2026</b> <a class="src" href="https://www.psi.edu/blog/psi-led-team-selected-for-nasa-prism-program/">Source</a></p></li>
+        <li><span class="who">VIPER<i>NASA</i></span><p>Ice-prospecting rover with a 1 m drill for the south pole. Cancelled July 2024; reassigned to a Blue Origin lander. <b class="flag next">Late 2027</b> <a class="src" href="https://www.nasa.gov/news-release/nasa-selects-blue-origin-to-deliver-viper-rover-to-moons-south-pole/">Source</a></p></li>
+        <li><span class="who">Chang'e-7<i>CNSA</i></span><p>Orbiter, lander, rover and a hopper carrying a water analyser into a shadowed crater near Shackleton. August 2026 launch called off. <b class="flag next">Delayed to 2027</b> <a class="src" href="https://spacenews.com/china-delays-change-7-lunar-south-pole-landing-mission-launch/">Source</a></p></li>
+        <li><span class="who">LunarLeaper<i>ESA candidate</i></span><p>Legged robot of about 15 kg with radar and gravimeter, to walk the ground above the Marius Hills tube. <b class="flag">Not yet selected</b> <a class="src" href="https://www.sciencedirect.com/science/article/pii/S0094576525008082">Source</a></p></li>
+        <li><span class="who">Moon Diver, Daedalus<i>NASA JPL, ESA</i></span><p>Earlier concepts to lower a tethered rover (NASA JPL) or an instrumented sphere (ESA study) into a pit. <b class="flag">Not funded</b></p></li>
+      </ul>
+    </div>
+    <div class="after">
+      <a class="btn violet" href="tav-app.html#new=rectangle;14.2,-56.9;14.2,-56.7;14.0,-56.7;14.0,-56.9">Capture the Marius Hills pit</a>
+      <p>Open the map with a 6 km box over the pit, ready to download.</p>
+    </div>
   </section>
 
   <section id="sources">
-    <div class="head"><span class="label">06</span><h2>Sources</h2></div>
-    <ul class="log plain">
+    <div class="head"><span class="label num">06</span><h2>Sources</h2></div>
+    <ul class="sources">
       <li><span class="label">Caves</span><p class="srcs">
         <a href="https://lroc.im-ldi.com/posts/200">LROC, mare pit craters</a>
         <a href="https://www.lroc.asu.edu/atlases">LROC, lunar atlases</a>
@@ -203,11 +237,10 @@
 </main>
 
 <footer>
-  <div class="wrap">
-    <nav class="pages" aria-label="All pages"><a href="index.html">Home</a><a href="tav-app.html">Map</a><a href="mapping.html" aria-current="page">Mapping the Moon</a><a href="software.html">Software</a><a href="tav.html">Aleph for the Moon</a><a href="detection.html">Cave detection</a><a href="aleph-tav.html">Aleph + Tav</a></nav>
-    <span class="label made">Made by a human on Earth 🌍 — for now</span>
-  </div>
+  <div class="wrap"><div>
+    <nav class="pages" aria-label="All pages"><a href="index.html">Aleph + Tav</a><a href="tav.html">Tav</a></nav>
+    <span class="made">Made by a human on Earth (for now)</span>
+  </div></div>
 </footer>
-
 </body>
 </html>

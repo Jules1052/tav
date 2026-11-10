@@ -1,6 +1,6 @@
 /* Page 02 animations: how each mapping tool works. One <canvas id> per scene, all schematic.
  * Every scene is a pure function of time t (seconds, looping), so reduced motion just draws one finished frame.
- * Colours follow the tokens in style.css. The sheet is black, so light = lit and black = shadow.
+ * Colours follow the tokens of the night cards in style.css (.night), the same in both themes: the card is black, so light = lit and black = shadow.
  */
 (() => {
   const root = document.documentElement;
@@ -9,7 +9,7 @@
 
   let c = {}, ctx;
   const readColors = () => {
-    const s = getComputedStyle(root), v = n => s.getPropertyValue(n).trim();
+    const s = getComputedStyle(document.querySelector('.night') || root), v = n => s.getPropertyValue(n).trim();
     c = { ink: v('--ink'), muted: v('--muted'), line: v('--line'), accent: v('--violet'),
           blue: v('--blue'), pink: v('--pink'), green: v('--green'), mono: v('--mono') };
   };

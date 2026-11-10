@@ -1,11 +1,12 @@
-/* Aleph + Tav (aleph-tav.html). WebGL2, no library.
- * Background (.field): cream paper and the Earth–Moon gravity lines
+/* Aleph + Tav (index.html). WebGL2, no library.
+ * Background (.field): the sheet and the Earth–Moon gravity lines
  * (equipotentials of the two bodies, the Moon's pull exaggerated) drifting slowly outward. Near the pointer they turn red.
  * Globes: the Earth (up left) and the Moon (down right) start as paper maps. Point at one, touch it or drag it,
- * and real colour soaks out from that spot. The settings at the bottom centre (day, night, altitude, mineral) choose how the real globes look.
- * Pointing at a globe opens its card: Aleph for the Earth, Tav for the Moon.
+ * and real colour soaks out from that spot, in day or night colour.
+ * Theme: the page follows the system, light (cream paper) or dark (night paper). The Day and Night buttons set it, and turn both globes real.
+ * Pointing at a globe opens its card: Aleph for the Earth, Tav for the Moon. Each card is a link, and clicking a globe follows it.
  * Earth: NASA Blue Marble, city lights, land height and a water mask (img/earth-data.png: R height, G sea and lakes, B rivers).
- * Moon: LRO wide-angle camera colour (NASA SVS), LOLA elevation, Lunar Prospector iron and thorium. All maps are equirectangular, centred on 0° longitude. */
+ * Moon: LRO wide-angle camera colour (NASA SVS) and LOLA elevation. All maps are equirectangular, centred on 0° longitude. */
 (() => {
   const RAD = Math.PI / 180, DIST = 4.3, F = 1 / Math.tan(15 * RAD);
   const DISC = F / Math.sqrt(DIST * DIST - 1);                       // disc radius as a share of the canvas half-width (≈ .89)
@@ -15,8 +16,8 @@
   const css = getComputedStyle(document.documentElement);
   const ink = name => { let h = css.getPropertyValue(name).trim().replace('#', ''); if (h.length === 3) h = h.replace(/./g, '$&$&');
     return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255); };
-  const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
   const frame = document.querySelector('.frame');
+  const repaint = [];                                                // the canvases, redrawn in the theme's inks when it changes
   const compile = (gl, vs, fs) => {
     const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
       if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
@@ -38,12 +39,11 @@
     vUV = uv; vN = uRot * n; vM = n;
     gl_Position = uMVP * vec4(n * (1. + (textureLod(uH, uv, 2.).r - uBase) * uK), 1.);
   }`;
-  // iso(c): a thin line at every half-integer of c, faded where the lines would crowd. ramp: four colours over 0..1.
+  // iso(c): a thin line at every half-integer of c, faded where the lines would crowd.
   // soak: a front spreading from the touched point uT (model space) out to the angle uR, ragged and inky.
   // uDir 1: real colour spreads over the paper; 0: the paper spreads back over the real colour.
   const LIB = `
   float iso(float c) { float w = fwidth(c); return (1. - smoothstep(0., 1.3 * w, abs(fract(c) - .5))) * (1. - smoothstep(.25, .6, w)); }
-  vec3 ramp(float t, vec3 a, vec3 b, vec3 c, vec3 d) { t = clamp(t, 0., 1.) * 3.; return t < 1. ? mix(a, b, t) : t < 2. ? mix(b, c, t - 1.) : mix(c, d, t - 2.); }
   float hash(vec3 p) { p = fract(p * .3183099 + .1); p *= 17.; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
   float noise(vec3 x) { vec3 i = floor(x), f = fract(x); f = f * f * (3. - 2. * f);
     return mix(mix(mix(hash(i), hash(i + vec3(1., 0., 0.)), f.x), mix(hash(i + vec3(0., 1., 0.)), hash(i + vec3(1., 1., 0.)), f.x), f.y),
@@ -59,14 +59,14 @@
   precision highp float;
   in vec2 vUV; in vec3 vN, vM;
   uniform sampler2D uH, uC, uL;
-  uniform vec4 uW;                                                  // looks: day, night, altitude, mineral (the Earth stays in day colour)
+  uniform vec2 uW;                                                  // looks: day, night
   uniform vec3 uT, uPaper, uSea, uInk, uRed; uniform float uR, uDir;
   out vec4 o;
   ${LIB}
   void main() {
     vec4 D = texture(uH, vUV);
     float lat = (.5 - vUV.y) * 3.14159265, mu = max(vN.z, 0.), limb = pow(mu, .5), rim = pow(1. - mu, 3.);
-    float sea = smoothstep(.3, .7, D.g), land = 1. - sea, t = sqrt(D.r), hs = texture(uH, vUV, 1.).r;
+    float sea = smoothstep(.3, .7, D.g), land = 1. - sea, hs = texture(uH, vUV, 1.).r;
     vec2 e = vec2(1. / 2048., 1. / 1024.);
     float hx = (texture(uH, vUV + vec2(e.x, 0.)).r - texture(uH, vUV - vec2(e.x, 0.)).r) / max(cos(lat), .15);
     float hy = texture(uH, vUV + vec2(0., e.y)).r - texture(uH, vUV - vec2(0., e.y)).r;
@@ -78,10 +78,6 @@
     // Night: city lights (orange on a blue base), made to glow
     vec3 L = texture(uL, vUV).rgb;
     vec3 night = mix((L * 1.1 + vec3(1., .78, .45) * smoothstep(.06, .3, L.r) * 1.5) * mix(.6, 1., limb), vec3(.12, .2, .45), rim * .6);
-    // Altitude: green lowlands to white peaks; the sea darker where Blue Marble shows it deeper
-    vec3 hyps = ramp(t * 1.25, vec3(.25, .46, .3), vec3(.8, .75, .5), vec3(.6, .37, .21), vec3(.98, .96, .92)) * shade;
-    vec3 deep = mix(vec3(.03, .08, .18), vec3(.2, .45, .66), smoothstep(.04, .3, dot(C, vec3(.15, .35, .5))));
-    vec3 alt = mix(mix(hyps, uInk, iso(hs * 8.) * .22), deep, sea) * mix(.65, 1., limb);
 
     // Paper: Aleph's map. Cream land, darker sea, ink coasts and contours, red lakes and rivers, a 15° graticule, an engraved edge
     vec3 paper = mix(uPaper, uSea, sea);
@@ -93,43 +89,29 @@
     paper = mix(paper, uInk, coast * .85);
     paper = mix(paper, uInk, (1. - smoothstep(0., .22, mu)) * .4);
 
-    o = vec4(soak(paper, (uW.x + uW.w) * day + uW.y * night + uW.z * alt, uInk), 1.);
+    o = vec4(soak(paper, uW.x * day + uW.y * night, uInk), 1.);
   }`;
 
   const MOON_FS = `#version 300 es
   precision highp float;
   in vec2 vUV; in vec3 vN, vM;
-  uniform sampler2D uH, uFe, uTh, uC;
-  uniform vec4 uW;                                                  // looks: day, night, altitude, mineral
-  uniform vec3 uT, uA, uB, uK3, uR0, uR1, uR2, uR3, uLine, uPaper, uSea, uInk; uniform float uR, uDir;
+  uniform sampler2D uH, uC;
+  uniform vec2 uW;                                                  // looks: day, night
+  uniform vec3 uT, uPaper, uSea, uInk; uniform float uR, uDir;
   out vec4 o;
   ${LIB}
-  // Lunar Prospector maps are rainbow-coded: recover 0 (blue) .. 1 (red) from the hue.
-  float val(sampler2D t) {
-    vec3 c = texture(t, vUV, 1.6).rgb;
-    float mx = max(c.r, max(c.g, c.b)), mn = min(c.r, min(c.g, c.b)), d = mx - mn;
-    if (d < .03) return 0.;
-    float hue = mx == c.r ? mod((c.g - c.b) / d, 6.) : mx == c.g ? (c.b - c.r) / d + 2. : (c.r - c.g) / d + 4.;
-    return clamp(1. - hue / 6. / .68, 0., 1.) * smoothstep(.03, .2, d);
-  }
   void main() {
-    float h = texture(uH, vUV).r, hc = texture(uH, vUV, 1.).r, lat = (.5 - vUV.y) * 3.14159265, mu = max(vN.z, 0.);
+    float hc = texture(uH, vUV, 1.).r, lat = (.5 - vUV.y) * 3.14159265, mu = max(vN.z, 0.);
     vec2 e = vec2(1. / 1920., 1. / 960.) * 1.5;
     float hx = (texture(uH, vUV + vec2(e.x, 0.)).r - texture(uH, vUV - vec2(e.x, 0.)).r) / max(cos(lat), .2);
     float hy = texture(uH, vUV + vec2(0., e.y)).r - texture(uH, vUV - vec2(0., e.y)).r;
     float shade = clamp(1. + 7. * (hx + hy), .5, 1.4), limb = mix(.74, 1., pow(mu, .55)), rim = pow(1. - mu, 3.);
-    float lift = mix(.8, 1.12, smoothstep(.1, .7, h)), line = iso(hc * 22.);
     vec3 C = texture(uC, vUV).rgb;
 
     // Day: LRO wide-angle camera colour, with the relief light
     vec3 day = C * mix(1., shade, .8) * limb * 1.1;
     // Night: the night side, lit only by earthshine (dim and blue)
     vec3 night = C * vec3(.55, .68, 1.) * .66 * mix(1., shade, .8) * limb + vec3(.16, .24, .55) * rim * .6;
-    // Altitude and minerals, as on the home page
-    vec3 alt = mix(ramp(smoothstep(.12, .62, h), uR0, uR1, uR2, uR3) * lift * shade, uLine, line * .28) * limb;
-    float polar = 1. - smoothstep(1.25, 1.42, abs(lat));            // element maps are noise near the poles
-    vec3 mineral = mix(uA, uB, smoothstep(.3, .56, val(uFe)) * polar);
-    mineral = mix(mix(mineral, uK3, smoothstep(.4, .85, val(uTh)) * polar) * lift * shade, uLine, line * .28) * limb;
 
     // Paper: the Moon on Aleph's paper, a shade darker than the Earth's. Maria darker still, ink contours, an engraved edge
     float alb = dot(texture(uC, vUV, 1.).rgb, vec3(.333));
@@ -137,7 +119,7 @@
     paper = mix(paper, uInk, iso(hc * 11.) * .36);
     paper = mix(paper, uInk, (1. - smoothstep(0., .22, mu)) * .45);
 
-    vec3 real = uW.x * day + uW.y * night + uW.z * alt + uW.w * mineral;
+    vec3 real = uW.x * day + uW.y * night;
     real = 1. - (1. - real) * .84;                                   // lift the darks: the Moon is small and must read at a glance
     o = vec4(soak(paper, real, uInk), 1.);
   }`;
@@ -145,10 +127,10 @@
   /* One globe. o: { fs, tex: [[file, sampler]] (the first is the height map), k, base, grid, lon, lat, spin, colours } */
   function globe(fig, o) {
     const stage = fig.querySelector('.stage'), canvas = stage.querySelector('canvas');
-    const g = { fig, stage, lock: false, onHot() {}, onTap() {}, onReal() {} };
+    const g = { fig, stage, onHot() {}, onTap() {} };
     let lon0 = o.lon, lat0 = o.lat, omega = 0, hot = false, drag = null;
     let want = false, dir = 1, reach = -1, speed = 0;                 // the soak front: dir as in the shader, reach its angle, speed +1 grows / -1 turns back
-    const W = [1, 0, 0, 0], G = [1, 0, 0, 0], touch = [0, 0, 1];
+    const W = [1, 0], G = [1, 0], touch = [0, 0, 1];
     let draw = () => {}, loop = () => {};
     const rot = () => { const c = Math.cos(-lon0 * RAD), s = Math.sin(-lon0 * RAD), ca = Math.cos(lat0 * RAD), sa = Math.sin(lat0 * RAD);
       return [[c, 0, s], [sa * s, ca, -sa * c], [-ca * s, sa, ca * c]]; };
@@ -167,7 +149,8 @@
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
       gl.enable(gl.DEPTH_TEST);
       gl.uniform1f(U('uK'), o.k); gl.uniform1f(U('uBase'), o.base);
-      o.colours((n, v) => gl.uniform3fv(U(n), v));
+      const paint = () => o.colours((n, v) => gl.uniform3fv(U(n), v));
+      paint(); repaint.push(() => { paint(); draw(); });
 
       let loaded = 0, size = 0;
       const aniso = gl.getExtension('EXT_texture_filter_anisotropic');
@@ -197,7 +180,7 @@
           F * R[0][0], F * R[1][0], A * R[2][0], -R[2][0],  F * R[0][1], F * R[1][1], A * R[2][1], -R[2][1],
           F * R[0][2], F * R[1][2], A * R[2][2], -R[2][2],  0, 0, -A * DIST + B, DIST]);
         gl.uniformMatrix3fv(uRot, false, [R[0][0], R[1][0], R[2][0], R[0][1], R[1][1], R[2][1], R[0][2], R[1][2], R[2][2]]);
-        gl.uniform4fv(uW, W); gl.uniform3fv(uT, touch); gl.uniform1f(uR, reach); gl.uniform1f(uDir, dir);
+        gl.uniform2fv(uW, W); gl.uniform3fv(uT, touch); gl.uniform1f(uR, reach); gl.uniform1f(uDir, dir);
         gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.drawElements(gl.TRIANGLES, idx.length, gl.UNSIGNED_INT, 0);
       };
@@ -210,7 +193,7 @@
         const base = still || hot ? 0 : -o.spin;
         let moving = false;
         if (!drag) { omega += (base - omega) * (1 - Math.exp(-dt * (hot ? 3.5 : 1.1))); lon0 += omega * dt; moving = Math.abs(omega) > .02 || base !== 0; }
-        for (let i = 0; i < 4; i++) { const d = G[i] - W[i]; if (Math.abs(d) < .003) W[i] = G[i]; else { W[i] += d * Math.min(1, dt * 7); moving = true; } }
+        for (let i = 0; i < 2; i++) { const d = G[i] - W[i]; if (Math.abs(d) < .003) W[i] = G[i]; else { W[i] += d * Math.min(1, dt * 7); moving = true; } }
         if (speed) { reach += speed * dt * (1.1 + Math.max(reach, 0) * 1.1); if (reach >= 4) { reach = 4; speed = 0; } else if (reach <= -1) { reach = -1; speed = 0; } moving = true; }
         draw();
         if (moving) loop(); else last = 0;
@@ -234,10 +217,9 @@
         for (let j = 0; j < 3; j++) touch[j] = R[0][j] * x + R[1][j] * y + R[2][j] * z;   // view → model: Rᵀ v
         dir = real ? 1 : 0; reach = still ? 4 : 0; speed = still ? 0 : 1;
       }
-      loop(); g.onReal();
+      loop();
     };
-    g.isReal = () => want;
-    const touched = p => { if (p && !g.lock) g.go(true, p); };       // paper until touched, unless Paper was chosen
+    const touched = p => { if (p) g.go(true, p); };                  // paper until touched
     g.setLook = i => { G.fill(0); G[i] = 1; loop(); };
     g.disc = () => { const r = stage.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2, r.width / 2 * DISC]; };
     const setHot = v => { if (v === hot) return; hot = v; fig.classList.toggle('hot', v); g.onHot(v); loop(); };
@@ -265,13 +247,13 @@
       omega = still || now - drag.t > 90 ? 0 : clamp(drag.v, -360, 360);
       drag = null; stage.classList.remove('dragging'); loop();
       if (e.type === 'pointerup' && e.pointerType !== 'touch') setHot(!!at(e));
-      if (tap && e.type === 'pointerup' && at(e)) g.onTap(e.pointerType);
+      if (tap && e.type === 'pointerup' && at(e)) g.onTap(e.pointerType, e);
     };
     stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
     stage.addEventListener('pointerleave', e => { if (!drag && e.pointerType !== 'touch') setHot(false); });
     stage.addEventListener('keydown', e => {
       if (e.target !== stage) return;
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); touched([0, 0]); g.onTap('key'); return; }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); touched([0, 0]); g.onTap('key', e); return; }
       const d = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, 10], ArrowDown: [0, -10] }[e.key];
       if (!d) return;
       e.preventDefault(); touched([0, 0]); omega = 0; lon0 += d[0]; lat0 = clamp(lat0 + d[1], -80, 80); draw();
@@ -286,39 +268,53 @@
   });
   const moon = globe(document.querySelector('.world.moon'), {
     fs: MOON_FS, grid: 200, k: .11, base: .45, lon: 0, lat: 8, spin: 6,
-    tex: [['img/moon-elevation.jpg', 'uH'], ['img/moon-iron.jpg', 'uFe'], ['img/moon-thorium.jpg', 'uTh'], ['img/moon-color.jpg', 'uC']],
-    colours: set => { const violet = ink('--violet'), pink = ink('--pink'), blue = ink('--blue');
-      set('uA', mix(ink('--bg'), blue, .68)); set('uB', violet); set('uK3', pink);
-      set('uR0', ink('--green')); set('uR1', blue); set('uR2', violet); set('uR3', pink); set('uLine', ink('--ink'));
-      set('uPaper', ink('--globe-land')); set('uSea', ink('--globe-sea')); set('uInk', ink('--line-a')); },
+    tex: [['img/moon-elevation.jpg', 'uH'], ['img/moon-color.jpg', 'uC']],
+    colours: set => { set('uPaper', ink('--globe-land')); set('uSea', ink('--globe-sea')); set('uInk', ink('--line-a')); },
   });
 
-  /* ---------------------------------------------------------------- Settings: paper, or one real look for both globes
-   * Paper locks both globes as paper maps (pointing at them no longer turns them real). Any other look turns both real. */
+  /* ---------------------------------------------------------------- Theme
+   * The CSS follows the system on its own. data-theme on <html> overrides it ("light" or "dark"); none: the system's.
+   * A change of theme redraws the canvases in the new inks, cross-fading the page where the browser can. */
+  const root = document.documentElement, system = matchMedia('(prefers-color-scheme: dark)');
+  const isDark = () => root.dataset.theme ? root.dataset.theme === 'dark' : system.matches;
+  const theme = want => {                                            // 'light', 'dark', or '' for the system's
+    const flips = (want ? want === 'dark' : system.matches) !== isDark();
+    const apply = () => { if (want) root.dataset.theme = want; else delete root.dataset.theme; repaint.forEach(f => f()); };
+    if (flips && !still && document.startViewTransition) document.startViewTransition(apply); else apply();
+  };
+
+  /* ---------------------------------------------------------------- Day and night
+   * One button for each theme, the theme's own pressed. Choosing one sets the theme and turns both globes real in that look.
+   * Before any choice the globes are paper maps, and a globe pointed at turns real in the look of the theme.
+   * When the system changes theme, the page and the look turn with it. */
   const looks = [...document.querySelectorAll('.looks button')];
-  let look = 0;                                                      // 0 day, 1 night, 2 altitude, 3 mineral
-  const press = () => { const paper = earth.lock || (!earth.isReal() && !moon.isReal());
-    looks.forEach(b => b.setAttribute('aria-pressed', b.dataset.look === 'paper' ? paper : !paper && +b.dataset.look === look)); };
+  const setLook = i => { earth.setLook(i); moon.setLook(i); looks.forEach(b => b.setAttribute('aria-pressed', +b.dataset.look === i)); };
   looks.forEach(b => b.addEventListener('click', () => {
-    const paper = b.dataset.look === 'paper';
-    earth.lock = moon.lock = paper;
-    if (!paper) { look = +b.dataset.look; earth.setLook(look); moon.setLook(look); }
-    earth.go(!paper); moon.go(!paper); press();
+    const want = +b.dataset.look ? 'dark' : 'light';
+    setLook(+b.dataset.look); theme(want === (system.matches ? 'dark' : 'light') ? '' : want);
+    earth.go(true); moon.go(true);
   }));
-  earth.onReal = moon.onReal = press;
-  press();
+  system.addEventListener('change', () => { theme(''); setLook(system.matches ? 1 : 0); });
+  setLook(isDark() ? 1 : 0);
 
   /* ---------------------------------------------------------------- Cards
-   * Pointing at a globe opens its card; it stays while the pointer is on the globe or the card.
-   * A click or tap pins it (tap again, click elsewhere or press Escape to close). Keyboard focus opens it too. */
-  const card = { aleph: frame.querySelector('.card.aleph'), tav: frame.querySelector('.card.tav') };
+   * Pointing at a globe opens its card; it stays while the pointer is on the globe or the card. Keyboard focus opens it too.
+   * Each card is a link (Aleph on GitHub, the Tav site), and clicking its globe (or Enter on it) follows it.
+   * On a touch screen, where nothing points, the first tap opens and pins the card; a second tap, on the globe or the card, follows the link
+   * (tap elsewhere or press Escape to close). */
+  const card = { aleph: frame.querySelector('.card.aleph'), tav: frame.querySelector('.card.tav') };   // the links
   let open = '', pin = '', hover = '', focus = '', timer = 0;
   const show = key => { if (key === open) return; open = key; frame.classList.toggle('pair-aleph', key === 'aleph'); frame.classList.toggle('pair-tav', key === 'tav'); };
   const sync = () => { clearTimeout(timer); const now = hover || focus; if (now) show(now); else timer = setTimeout(() => show(hover || focus || pin), 450); };
   [['aleph', earth], ['tav', moon]].forEach(([key, g]) => {
     const c = card[key], mine = el => g.fig.contains(el) || c.contains(el);
     g.onHot = on => { if (on) hover = key; else if (hover === key) hover = ''; sync(); };
-    g.onTap = how => { pin = pin === key && how !== 'mouse' ? '' : key; clearTimeout(timer); show(hover || focus || pin); };
+    g.onTap = (how, e) => {
+      if (how === 'touch' && open !== key) { pin = key; clearTimeout(timer); show(key); return; }
+      // the link's own click, so a modifier key (new tab, new window) works as on the link
+      const { ctrlKey, metaKey, shiftKey, altKey } = e;
+      c.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window, ctrlKey, metaKey, shiftKey, altKey }));
+    };
     c.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') { hover = key; sync(); } });
     c.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch' && hover === key) { hover = ''; sync(); } });
     // Only keyboard focus opens a card
@@ -336,8 +332,8 @@
   const FIELD_FS = `#version 300 es
   precision highp float;
   uniform vec2 uRes, uMouse; uniform float uDpr, uU, uTime, uHot;
-  uniform vec3 uE, uM, uCream, uInk, uRed;                          // uE, uM: centre (css px, y down) and radius of each disc
-  uniform vec4 uClear[4];                                           // boxes kept free of lines (text)
+  uniform vec3 uE, uM, uSheet, uInk, uRed;                          // uE, uM: centre (css px, y down) and radius of each disc
+  uniform vec4 uClear[3];                                           // boxes kept free of lines (text)
   out vec4 o;
   float hash(vec2 p) { vec3 q = fract(vec3(p.xyx) * .1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
   float noise(vec2 x) { vec2 i = floor(x), f = fract(x); f = f * f * (3. - 2. * f);
@@ -352,9 +348,9 @@
     float c = log(phi) * 7. + uTime * .1;                           // + time: the lines drift outward, like waves
     float fc = fwidth(c) * uDpr;                                    // change of c per css pixel
     float line = (1. - smoothstep(.4, 1., abs(fract(c) - .5) / fc)) * (1. - smoothstep(.3, .7, fc));
-    vec3 bg = uCream * (1. - .05 * hash(floor(gl_FragCoord.xy)));   // paper grain
+    vec3 bg = uSheet * (1. - .05 * hash(floor(gl_FragCoord.xy)));   // paper grain
     float clr = 0.;
-    for (int i = 0; i < 4; i++) { vec4 r = uClear[i]; vec2 q = max(r.xy - p, p - r.zw); clr = max(clr, 1. - smoothstep(-6., 26., max(q.x, q.y))); }
+    for (int i = 0; i < 3; i++) { vec4 r = uClear[i]; vec2 q = max(r.xy - p, p - r.zw); clr = max(clr, 1. - smoothstep(-6., 26., max(q.x, q.y))); }
     line *= 1. - .92 * clr;
     // Near the pointer the lines turn red
     float m = uHot * (1. - smoothstep(0., 280., length(p - uMouse)));
@@ -368,9 +364,9 @@
     const U = compile(gl, FIELD_VS, FIELD_FS);
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-    gl.uniform3fv(U('uCream'), ink('--cream')); gl.uniform3fv(U('uInk'), ink('--line-a')); gl.uniform3fv(U('uRed'), ink('--red'));
+    const paint = () => { gl.uniform3fv(U('uSheet'), ink('--sheet')); gl.uniform3fv(U('uInk'), ink('--line-a')); gl.uniform3fv(U('uRed'), ink('--red')); };
     const uRes = U('uRes'), uDpr = U('uDpr'), uU = U('uU'), uTime = U('uTime'), uE = U('uE'), uM = U('uM'), uMouse = U('uMouse'), uHot = U('uHot'), uClear = U('uClear');
-    const boxes = ['.claim', '.settings', '.hint', '.made'].map(q => frame.querySelector(q));
+    const boxes = ['.claim', '.settings', '.hint'].map(q => frame.querySelector(q));
     let dpr = 1, hot = 0, hotGoal = 0, mx = -1e4, my = -1e4, raf = 0, lastDraw = 0;
     const measure = () => {
       dpr = Math.min(devicePixelRatio || 1, 1.5);
@@ -397,6 +393,7 @@
       document.documentElement.addEventListener('pointerleave', () => { hotGoal = 0; queue(); });
     }
     document.fonts.ready.then(() => { measure(); queue(); });
-    measure(); queue();
+    repaint.push(() => { paint(); queue(); });
+    paint(); measure(); queue();
   })();
 })();

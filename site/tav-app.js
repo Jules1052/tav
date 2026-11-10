@@ -102,14 +102,15 @@
 
   // ---------------------------------------------------------------- draw
   // ghost: the shape being drawn; tip: its size in km while a rectangle is dragged; dot: the first corner of a polygon
-  var mode = null, shape = null, ring = null, start = null, verts = [], ghost = null, tip = null, dot = null;
+  // drawId: the pointer dragging out a rectangle
+  var mode = null, shape = null, ring = null, start = null, drawId = null, verts = [], ghost = null, tip = null, dot = null;
   function clearDraft() { [ghost, tip, dot].forEach(function (l) { if (l) map.removeLayer(l); }); ghost = tip = dot = null; }
   function setMode(m) {
     mode = m; $('draw-rect').classList.toggle('on', m === 'rect'); $('draw-poly').classList.toggle('on', m === 'poly');
     map.getContainer().classList.toggle('drawing', !!m);
     if (m) { map.dragging.disable(); map.doubleClickZoom.disable(); } else { map.dragging.enable(); map.doubleClickZoom.enable(); }
     $('hint').textContent = m === 'rect' ? 'Now press, drag and release on the map.' : m === 'poly' ? 'Click each corner on the map. Click the first corner again (or double-click) to close the shape: the download starts at once.' : 'Press the button, then press, drag and release on the map.';
-    verts = []; start = null; clearDraft();
+    verts = []; start = null; drawId = null; clearDraft();
   }
   function clearShape() { if (shape) map.removeLayer(shape); shape = null; ring = null; }
   function finish(kind, pts) {
@@ -118,30 +119,45 @@
   $('draw-rect').onclick = function () { setMode(mode === 'rect' ? null : 'rect'); };
   $('draw-poly').onclick = function () { setMode(mode === 'poly' ? null : 'poly'); };
   $('redraw').onclick = function () { nav(''); setMode('rect'); };
-  map.on('mousedown', function (e) { if (mode === 'rect') { start = e.latlng; } });
+  // The rectangle follows pointer events, not Leaflet's mouse events: a finger dragging fires no mousemove.
+  // A second finger cancels it, so a pinch still zooms (.drawing turns off the browser's own panning, see the CSS).
+  var mapEl = map.getContainer();
+  mapEl.addEventListener('pointerdown', function (e) {
+    if (mode !== 'rect') return;
+    if (drawId !== null) { drawId = null; start = null; clearDraft(); return; }
+    if (!e.isPrimary || e.button !== 0 || e.target.closest('.leaflet-control')) return;
+    drawId = e.pointerId; start = map.mouseEventToLatLng(e);
+    mapEl.setPointerCapture(e.pointerId);
+  });
+  mapEl.addEventListener('pointermove', function (e) {
+    if (e.pointerId !== drawId) return;
+    var ll = map.mouseEventToLatLng(e), bb = L.latLngBounds(start, ll), mid = (start.lat + ll.lat) / 2;
+    var w = Math.abs(ll.lng - start.lng) * KM * Math.cos(mid * Math.PI / 180), h = Math.abs(ll.lat - start.lat) * KM;
+    var txt = '≈ ' + fmtKm(w) + ' km × ' + fmtKm(h) + ' km<small>' + num(w * h) + ' km²</small>';
+    if (ghost) ghost.setBounds(bb); else ghost = L.rectangle(bb, { color: RED, weight: 2, fillOpacity: 0.08, interactive: false }).addTo(map);
+    if (tip) tip.setLatLng(ll).setContent(txt);
+    else tip = L.tooltip(e.pointerType === 'touch' ? { direction: 'top', offset: [0, -36], className: 'km' } : { direction: 'right', offset: [16, 0], className: 'km' })   // above the finger, not under it
+      .setLatLng(ll).setContent(txt).addTo(map);
+  });
+  function endRect(e) {
+    if (e.pointerId !== drawId) return;
+    var a = start; drawId = null; start = null;
+    if (e.type === 'pointercancel') { clearDraft(); return; }
+    var b = map.mouseEventToLatLng(e);
+    if (Math.abs(a.lat - b.lat) < 1e-4 || Math.abs(a.lng - b.lng) < 1e-4) { clearDraft(); return; }
+    var n = Math.max(a.lat, b.lat), s = Math.min(a.lat, b.lat), w = Math.min(a.lng, b.lng), ea = Math.max(a.lng, b.lng);
+    finish('rectangle', [L.latLng(n, w), L.latLng(n, ea), L.latLng(s, ea), L.latLng(s, w)]);
+  }
+  mapEl.addEventListener('pointerup', endRect); mapEl.addEventListener('pointercancel', endRect);
   // a click within 12 px of the first corner closes the polygon
   function nearStart(ll) { return verts.length >= 3 && map.latLngToContainerPoint(ll).distanceTo(map.latLngToContainerPoint(verts[0])) < 12; }
   map.on('mousemove', function (e) {
-    if (mode === 'rect' && start) {
-      var bb = L.latLngBounds(start, e.latlng), mid = (start.lat + e.latlng.lat) / 2;
-      var w = Math.abs(e.latlng.lng - start.lng) * KM * Math.cos(mid * Math.PI / 180), h = Math.abs(e.latlng.lat - start.lat) * KM;
-      var txt = '≈ ' + fmtKm(w) + ' km × ' + fmtKm(h) + ' km<small>' + num(w * h) + ' km²</small>';
-      if (ghost) ghost.setBounds(bb); else ghost = L.rectangle(bb, { color: RED, weight: 2, fillOpacity: 0.08, interactive: false }).addTo(map);
-      if (tip) tip.setLatLng(e.latlng).setContent(txt);
-      else tip = L.tooltip({ direction: 'right', offset: [16, 0], className: 'km' }).setLatLng(e.latlng).setContent(txt).addTo(map);
-    } else if (mode === 'poly' && verts.length) {
+    if (mode === 'poly' && verts.length) {
       var snap = nearStart(e.latlng);
       if (ghost) map.removeLayer(ghost);
       ghost = L.polyline(verts.concat([snap ? verts[0] : e.latlng]), { color: RED, weight: 2, interactive: false }).addTo(map);
       if (dot) dot.setRadius(snap ? 9 : 6);
     }
-  });
-  map.on('mouseup', function (e) {
-    if (mode !== 'rect' || !start) return;
-    var a = start, b = e.latlng; start = null;
-    if (Math.abs(a.lat - b.lat) < 1e-4 || Math.abs(a.lng - b.lng) < 1e-4) { clearDraft(); return; }
-    var n = Math.max(a.lat, b.lat), s = Math.min(a.lat, b.lat), w = Math.min(a.lng, b.lng), ea = Math.max(a.lng, b.lng);
-    finish('rectangle', [L.latLng(n, w), L.latLng(n, ea), L.latLng(s, ea), L.latLng(s, w)]);
   });
   map.on('click', function (e) {
     if (mode !== 'poly') return;
