@@ -1,6 +1,6 @@
 /* Tav page (tav.html): the Moon as a globe. WebGL2, no library.
  * Colour: the LRO wide-angle camera (img/moon-color.jpg). Relief: LOLA elevation (img/moon-elevation.jpg), exaggerated.
- * Minerals: the Lunar Prospector iron and thorium maps (img/moon-iron.jpg, img/moon-thorium.jpg), read back from their rainbow scale
+ * Composition: the Lunar Prospector iron and thorium maps (img/moon-iron.jpg, img/moon-thorium.jpg), read back from their rainbow scale
  * (blue = low, red = high), in the --globe-high, --globe-mare and --globe-kreep tokens of style.css.
  * All maps are equirectangular, centred on 0° longitude, as on the home.
  * It turns slowly until touched (not with reduced motion). Drag it or use the arrow keys; a site button turns it to that site. */
@@ -34,7 +34,7 @@
     vUV = uv; vN = uRot * n;
     gl_Position = uMVP * vec4(n * (1. + (textureLod(uH, uv, 2.).r - uBase) * uK), 1.);
   }`;
-  // uMode 0: the camera's colour; 1: minerals (highlands, iron-rich maria, thorium). Both with the relief light and a darker limb.
+  // uMode 0: the camera's colour; 1: composition (highlands, iron-rich maria, thorium). Both with the relief light and a darker limb.
   const FS = `#version 300 es
   precision highp float;
   in vec2 vUV; in vec3 vN;
@@ -58,10 +58,10 @@
     float limb = mix(.6, 1., pow(max(vN.z, 0.), .55));
     vec3 colour = texture(uC, vUV).rgb * mix(1., shade, .8) * 1.1;
     float polar = 1. - smoothstep(1.25, 1.42, abs(lat));            // the element maps are noise near the poles
-    vec3 mineral = mix(uHigh, uMare, smoothstep(.3, .56, val(uFe)) * polar);
-    mineral = mix(mineral, uKreep, smoothstep(.4, .85, val(uTh)) * polar);
-    mineral *= mix(.8, 1.12, smoothstep(.1, .7, h)) * shade;         // higher ground is lighter
-    o = vec4(mix(colour, mineral, uMode) * limb, 1.);
+    vec3 comp = mix(uHigh, uMare, smoothstep(.3, .56, val(uFe)) * polar);
+    comp = mix(comp, uKreep, smoothstep(.4, .85, val(uTh)) * polar);
+    comp *= mix(.8, 1.12, smoothstep(.1, .7, h)) * shade;         // higher ground is lighter
+    o = vec4(mix(colour, comp, uMode) * limb, 1.);
   }`;
 
   let U;
@@ -132,7 +132,7 @@
     });
   }
 
-  // Motion: the slow turn, the turn to a chosen site, the cross-fade between colour and minerals
+  // Motion: the slow turn, the turn to a chosen site, the cross-fade between colour and composition
   let raf = 0, last = 0, visible = true;
   function tick(now) {
     raf = 0;
@@ -188,7 +188,7 @@
     list.append(p.pill);
   });
 
-  // Colour or minerals
+  // Colour or composition
   const modes = [...fig.querySelectorAll('.modes button')];
   modes.forEach(b => b.addEventListener('click', () => {
     modeGoal = +b.dataset.mode; if (still) mode = modeGoal;

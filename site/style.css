@@ -26,7 +26,7 @@
   --night-line: #34332e; --night-edge: rgba(243, 234, 217, .24);
   /* Data inks, the map's points (only in data, never in the chrome) */
   --blue: #5b8cff; --pink: #ff5fb8; --green: #3dffc0; --amber: #ffb347;
-  /* The globe's minerals (tav.js): sepia highlands, dark iron-rich maria, thorium in violet */
+  /* The globe's composition (tav.js): sepia highlands, dark iron-rich maria, thorium in violet */
   --globe-high: #b4ab9b; --globe-mare: #3b3833; --globe-kreep: #a98bff;
   --sans: Poppins, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -232,7 +232,7 @@ body > footer .made { color: var(--muted); font-size: 13.5px; }
   font: 500 11.5px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
 .pill:hover { border-color: var(--violet); color: var(--ink); }
 
-/* The Moon, a globe lying on the page as on the home. Colour or minerals above it, the sites under it (tav.js) */
+/* The Moon, a globe lying on the page as on the home. Colour or composition above it, the sites under it (tav.js) */
 .globe { width: 100%; max-width: 500px; justify-self: center; }
 .globe .tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
 .globe .modes { display: flex; gap: 6px; }
@@ -263,7 +263,7 @@ body > footer .made { color: var(--muted); font-size: 13.5px; }
 .globe .sites .pill[aria-pressed="true"] { border-color: var(--violet); color: var(--ink); }
 .globe .sites .pill[aria-pressed="true"]::before { background: var(--violet); }
 .globe figcaption { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 18px; margin-top: 14px; text-align: center; }
-/* The minerals' key, in the caption while they show. Its place is kept in Colour too, so the hero does not move */
+/* The composition key, in the caption while it shows. Its place is kept in Colour too, so the hero does not move */
 .globe .key { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; visibility: hidden; opacity: 0; transition: opacity .3s, visibility .3s; }
 .globe .key.on { visibility: visible; opacity: 1; }
 .globe .key > span { display: inline-flex; align-items: center; gap: 6px; }
