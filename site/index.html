@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap">
-<link rel="stylesheet" href="aleph-tav.css?v=22">
+<link rel="stylesheet" href="aleph-tav.css?v=23">
 </head>
 <body class="duo">
 <!-- Background, drawn by aleph-tav.js: the sheet (cream paper, or night paper in the dark theme) and the Earth–Moon gravity lines -->
@@ -26,11 +26,13 @@
 
 <!-- The frame: a 1440 × 860 design (420 × 900 on a tall screen), scaled to fit the window -->
 <main class="frame">
+  <a class="mark al" href="https://github.com/Belluxx/Aleph" aria-label="Aleph on GitHub"><span lang="he" aria-hidden="true">א</span></a>
   <div class="settings">
-    <div class="looks" role="group" aria-label="Day or night">
-      <button type="button" data-look="0" aria-pressed="false" title="Light page. Earth: NASA Blue Marble. Moon: LRO camera colour">Day</button><button type="button" data-look="1" aria-pressed="false" title="Dark page. Earth: city lights. Moon: lit by earthshine">Night</button>
+    <div class="looks" role="group" aria-label="Show the globes in">
+      <button type="button" data-look="paper" aria-pressed="true" title="Paper maps, in Aleph’s ink">Paper</button><button type="button" data-look="0" aria-pressed="false" title="Light page. Earth: NASA Blue Marble. Moon: LRO camera colour">Day</button><button type="button" data-look="1" aria-pressed="false" title="Dark page. Earth: city lights. Moon: lit by earthshine">Night</button><button type="button" data-look="2" aria-pressed="false" title="Low to high, relief exaggerated">Altitude</button><button type="button" data-look="3" aria-pressed="false" title="Moon: iron and thorium (Lunar Prospector). The Earth stays in day colour">Mineral</button>
     </div>
   </div>
+  <a class="mark tv" href="tav.html" aria-label="Tav site"><span lang="he" aria-hidden="true">ת</span></a>
 
   <div class="claim">
     <h1>Download a piece of a planet</h1>
@@ -52,18 +54,25 @@
 
   <p class="hint" aria-hidden="true"><span class="mouse">↖ Point at the Earth or at the Moon ↘</span><span class="finger">Tap the Earth or the Moon</span></p>
 
-  <!-- Each card is the link its globe follows when clicked -->
-  <a class="card aleph" href="https://github.com/Belluxx/Aleph" aria-label="Aleph on GitHub" aria-describedby="aleph-txt">
-    <h2 class="banner"><img src="img/aleph-banner.svg" width="1040" height="260" alt="Aleph"></h2>
-    <p class="box" id="aleph-txt">Draw a box anywhere on Earth and Aleph downloads everything inside it: buildings, elevation, satellite imagery, Street View photos and textured 3D models.</p>
-  </a>
-  <a class="card tav" href="tav.html" aria-label="Tav site" aria-describedby="tav-txt">
-    <h2 class="banner"><img src="img/tav-banner.png" width="1960" height="480" alt="Tav"></h2>
-    <p class="box" id="tav-txt">Draw a box anywhere on the Moon and Tav downloads everything inside it: imagery, elevation, a textured 3D mesh, night temperature, gravity, radar, caves, minerals and on-site photos.</p>
-  </a>
+  <!-- Clicking a globe follows the first button of its card -->
+  <article class="card aleph" aria-labelledby="aleph-name">
+    <h2 class="banner" id="aleph-name"><img src="img/aleph-banner.svg" width="1040" height="260" alt="Aleph"></h2>
+    <div class="box">
+      <p>Draw a box anywhere on Earth and Aleph downloads everything inside it: buildings, elevation, satellite imagery, Street View photos and textured 3D models.</p>
+      <div class="go"><a href="https://github.com/Belluxx/Aleph">Aleph on GitHub ↗</a></div>
+    </div>
+  </article>
+  <article class="card tav" aria-labelledby="tav-name">
+    <h2 class="banner" id="tav-name"><img src="img/tav-banner.png" width="1960" height="480" alt="Tav"></h2>
+    <div class="box">
+      <p>Draw a box anywhere on the Moon and Tav downloads everything inside it: imagery, elevation, a textured 3D mesh, night temperature, gravity, radar, caves, minerals and on-site photos.</p>
+      <div class="go"><a class="main" href="tav.html">Tav site →</a><a href="https://github.com/Jules1052/tav">Tav on GitHub ↗</a></div>
+    </div>
+  </article>
 
+  <p class="made">Made by a human on Earth 🌍 (for now)</p>
 </main>
 
-<script src="aleph-tav.js?v=21"></script>
+<script src="aleph-tav.js?v=22"></script>
 </body>
 </html>

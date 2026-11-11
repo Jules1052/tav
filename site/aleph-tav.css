@@ -5,8 +5,10 @@
  */
 
 /* 1. Tokens and sheet ------------------------------------------------------- */
-/* Self-contained: this page does not load style.css. Its type (Poppins, JetBrains Mono) and the Tav inks of the Tav card are kept here. */
-:root { --ink-2: #c6c9dc; --violet: #a98bff;
+/* Self-contained: this page does not load style.css. Its type (Poppins, JetBrains Mono) and the Tav night inks,
+ * which the Tav card and the Moon's altitude and mineral looks in aleph-tav.js read, are kept here (the same in both themes). */
+:root { --bg: #000; --ink: #f6f7ff; --ink-2: #c6c9dc;
+  --blue: #5b8cff; --violet: #a98bff; --pink: #ff5fb8; --green: #3dffc0;
   --font: Poppins, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace; }
 * { box-sizing: border-box; }
@@ -53,7 +55,14 @@ body.duo { height: 100%; overflow: hidden; color: var(--ink-a);
 @supports (height: 100dvh) { .frame { --u: min(calc(100vw / var(--W)), calc(100dvh / var(--H))); } }
 .frame > * { position: absolute; margin: 0; }
 
-/* 3. Settings, at the bottom centre ------------------------------------------------ */
+/* 3. The two letters at the top, the settings at the bottom centre ------------- */
+.mark { top: calc(12 * var(--u)); font: 600 calc(58 * var(--u))/1 "Arial Hebrew", "SF Hebrew", "Noto Sans Hebrew", Arial, sans-serif; text-decoration: none; }
+.mark.al { left: calc(34 * var(--u)); color: var(--red); }
+.mark.tv { right: calc(34 * var(--u)); color: var(--violet); }
+.mark span { display: block; padding: calc(6 * var(--u)) calc(8 * var(--u)); transition: transform .3s cubic-bezier(.3, .7, .2, 1); }
+.mark:hover span, .mark:focus-visible span { transform: scale(1.12) rotate(-4deg); }
+.mark:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; border-radius: 8px; }
+
 .settings { left: 50%; bottom: calc(20 * var(--u)); transform: translateX(-50%); width: max-content; max-width: calc(var(--W) * var(--u)); }
 .looks { display: flex; flex-wrap: wrap; justify-content: center; gap: calc(6 * var(--u)); }
 .looks button { font: 500 max(12px, calc(15 * var(--u)))/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a2);
@@ -101,8 +110,8 @@ body.duo { height: 100%; overflow: hidden; color: var(--ink-a);
 @media (hover: none) { .hint .finger { display: inline; } .hint .mouse { display: none; } }
 .pair-aleph .hint, .pair-tav .hint { opacity: 0; }
 
-/* A card: the project's banner (a pill with its own paper), centred over the box with the text. The whole card is one link. */
-.card { left: calc(572 * var(--u)); top: calc(318 * var(--u)); width: calc(470 * var(--u)); z-index: 2; display: block; color: inherit; text-decoration: none;
+/* A card: the project's banner (a pill with its own paper), centred over the box with the text and the buttons. */
+.card { left: calc(572 * var(--u)); top: calc(318 * var(--u)); width: calc(470 * var(--u)); z-index: 2; display: block; color: inherit;
   opacity: 0; visibility: hidden; transition: opacity .3s ease, transform .5s cubic-bezier(.2, .8, .2, 1), visibility 0s linear .5s; }
 /* Aleph comes from the Earth (up left), Tav from the Moon (down right) */
 .card.aleph { transform: translate(calc(-40 * var(--u)), calc(-28 * var(--u))) rotate(-1.5deg); }
@@ -117,17 +126,34 @@ body.duo { height: 100%; overflow: hidden; color: var(--ink-a);
   font: 400 max(15px, calc(20.5 * var(--u)))/1.55 var(--font); transition: border-color .2s; }
 .card.aleph .box { background: var(--aleph-paper); color: var(--aleph-ink-2); border: 2px solid var(--aleph-line); box-shadow: 0 calc(24 * var(--u)) calc(60 * var(--u)) var(--shadow); }
 .card.tav .box { background: var(--navy); color: var(--ink-2); border: 1px solid rgba(255, 255, 255, .28); box-shadow: 0 calc(24 * var(--u)) calc(60 * var(--u)) var(--shadow); }
+.card .box p { margin: 0; }
 /* Pointed at or focused, the box is ruled in the project's colour */
-.card:focus-visible { outline: none; }
-.card.aleph:hover .box, .card.aleph:focus-visible .box { border-color: var(--red); }
-.card.tav:hover .box, .card.tav:focus-visible .box { border-color: var(--violet); }
-.card:focus-visible .box { outline: 2px solid currentColor; outline-offset: 3px; }
+.card.aleph:hover .box, .card.aleph:focus-within .box { border-color: var(--red); }
+.card.tav:hover .box, .card.tav:focus-within .box { border-color: var(--violet); }
+/* The buttons: the site and GitHub */
+.card .go { display: flex; flex-wrap: wrap; gap: calc(10 * var(--u)); margin-top: calc(18 * var(--u)); }
+.card .go a { font: 500 max(12px, calc(15.5 * var(--u)))/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; text-decoration: none;
+  padding: calc(12 * var(--u)) calc(17 * var(--u)); border-radius: 999px; border: 1.5px solid; transition: background .2s, color .2s, border-color .2s; }
+.card .go a:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.card.aleph .go a { color: var(--aleph-paper); background: var(--aleph-line); border-color: var(--aleph-line); }
+.card.aleph .go a:hover, .card.aleph .go a:focus-visible { background: var(--red); border-color: var(--red); color: #fff; }
+.card.tav .go a { color: var(--ink); border-color: rgba(255, 255, 255, .4); }
+.card.tav .go a.main { color: #000; background: var(--violet); border-color: var(--violet); }
+.card.tav .go a:hover, .card.tav .go a:focus-visible { border-color: var(--violet); }
+.card.tav .go a.main:hover, .card.tav .go a.main:focus-visible { background: #c2adff; border-color: #c2adff; }
 
-/* 7. Tall screens (phones): a 420 × 900 frame, the card rises from the bottom ------ */
+/* 7. Signature ------------------------------------------------------------------ */
+.made { left: calc(34 * var(--u)); bottom: calc(28 * var(--u)); font: 500 max(11px, calc(14 * var(--u)))/1.4 var(--mono); letter-spacing: .06em;
+  color: var(--ink-a2); opacity: .85; }
+
+/* 8. Tall screens (phones): a 420 × 900 frame, the card rises from the bottom ------ */
 @media (max-aspect-ratio: 1/1) {
   .frame { --W: 420; --H: 900; }
+  .mark { top: calc(8 * var(--u)); font-size: calc(46 * var(--u)); }
+  .mark.al { left: calc(12 * var(--u)); }
+  .mark.tv { right: calc(12 * var(--u)); }
   .rivers { display: none; }                         /* too close to the content on a narrow screen */
-  .settings { left: calc(4 * var(--u)); right: calc(4 * var(--u)); bottom: calc(16 * var(--u)); width: auto; transform: none; }
+  .settings { left: calc(4 * var(--u)); right: calc(4 * var(--u)); bottom: calc(42 * var(--u)); width: auto; transform: none; }
   .looks button { font-size: max(12px, calc(14 * var(--u))); padding: calc(9 * var(--u)) calc(9 * var(--u)); }
   .claim { top: calc(96 * var(--u)); width: calc(400 * var(--u)); }
   .claim h1 { font-size: calc(34 * var(--u)); }
@@ -137,7 +163,8 @@ body.duo { height: 100%; overflow: hidden; color: var(--ink-a);
   .hint { left: 0; width: calc(420 * var(--u)); top: calc(270 * var(--u)); font-size: max(14px, calc(17 * var(--u))); }
   .card { left: calc(10 * var(--u)); width: calc(400 * var(--u)); top: auto; bottom: calc(10 * var(--u)); }
   .card .banner img { max-width: calc(280 * var(--u)); }
+  .made { left: calc(18 * var(--u)); bottom: calc(12 * var(--u)); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .card, .ring, .ring circle, .hint { transition: none; }
+  .card, .ring, .ring circle, .hint, .mark span { transition: none; }
 }
